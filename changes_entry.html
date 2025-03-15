@@ -27,21 +27,21 @@
             font-weight: bold;
             color: #ffffff;
         }
-        select, input {
+        select, input, textarea {
             padding: 8px;
             margin: 5px;
             border-radius: 5px;
             border: 1px solid #333;
             background-color: #333;
             color: #ffffff;
+            width: 100%;
+            box-sizing: border-box;
         }
         .changeText {
-            width: 100%;
             height: 50px;
+            resize: vertical;
         }
         button {
-            display: block;
-            width: 100%;
             padding: 10px;
             margin-top: 10px;
             background-color: #28a745;
@@ -54,23 +54,74 @@
         button:hover {
             background-color: #218838;
         }
+        .deleteBtn {
+            background-color: #dc3545;
+            padding: 5px 10px;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .deleteBtn:hover {
+            background-color: #c82333;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
             background-color: #1e1e1e;
+            table-layout: fixed;
         }
         th, td {
             padding: 10px;
             border: 1px solid #444;
             text-align: center;
+            word-wrap: break-word;
         }
         th {
             background-color: #333;
             color: white;
         }
+        td:nth-child(1) { width: 10%; }
+        td:nth-child(2) { width: 10%; }
+        td:nth-child(3) { width: 25%; }
+        td:nth-child(4) { width: 45%; }
+        td:nth-child(5) { width: 10%; }
     </style>
     <script>
+        function checkForExistingData() {
+            const trackName = document.getElementById('trackName').value;
+            const raceDate = document.getElementById('raceDate').value;
+            if (!trackName || !raceDate) return;
+
+            const fileName = `${trackName}_${raceDate}_changes.json`;
+            const fileUrl = `/json/${fileName}`;
+
+            fetch(fileUrl)
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        throw new Error('File not found');
+                    }
+                })
+                .then(data => {
+                    if (confirm("A saved file exists for this track and date. Do you want to reload it?")) {
+                        loadExistingData(data);
+                    }
+                })
+                .catch(error => console.log("No existing file found."));
+        }
+
+        function loadExistingData(data) {
+            const tableBody = document.getElementById("tableBody");
+            tableBody.innerHTML = "";
+            data.forEach(entry => {
+                addRow(entry);
+            });
+            addRow(); // Ensure at least one empty row is always available
+        }
+
         function saveData() {
             const trackName = document.getElementById('trackName').value;
             const raceDate = document.getElementById('raceDate').value;
@@ -103,9 +154,8 @@
             .catch(error => console.error('Error:', error));
         }
         
-        function addRow() {
+        function addRow(entry = {}) {
             const tableBody = document.getElementById("tableBody");
-            const rowCount = tableBody.children.length;
             
             let row = document.createElement("tr");
             
@@ -117,10 +167,11 @@
                 let option = document.createElement("option");
                 option.value = j;
                 option.textContent = j;
+                if (entry.raceNumber == j) option.selected = true;
                 raceSelect.appendChild(option);
             }
             raceSelect.addEventListener("change", function() {
-                if (rowCount < 30) addRow();
+                if (this.value) addRow();
             });
             raceCell.appendChild(raceSelect);
             row.appendChild(raceCell);
@@ -133,6 +184,7 @@
                 let option = document.createElement("option");
                 option.value = k;
                 option.textContent = k;
+                if (entry.saddlePad == k) option.selected = true;
                 saddleSelect.appendChild(option);
             }
             saddleCell.appendChild(saddleSelect);
@@ -142,14 +194,24 @@
             let horseInput = document.createElement("input");
             horseInput.type = "text";
             horseInput.className = "horseName";
+            horseInput.value = entry.horseName || "";
             horseCell.appendChild(horseInput);
             row.appendChild(horseCell);
             
             let changeCell = document.createElement("td");
             let changeInput = document.createElement("textarea");
             changeInput.className = "changeText";
+            changeInput.value = entry.change || "";
             changeCell.appendChild(changeInput);
             row.appendChild(changeCell);
+            
+            let deleteCell = document.createElement("td");
+            let deleteButton = document.createElement("button");
+            deleteButton.className = "deleteBtn";
+            deleteButton.textContent = "Delete";
+            deleteButton.onclick = function() { row.remove(); };
+            deleteCell.appendChild(deleteButton);
+            row.appendChild(deleteCell);
             
             tableBody.appendChild(row);
         }
@@ -163,27 +225,17 @@
     <div class="container">
         <h2>Race Changes</h2>
         <label for="trackName">Track Name:</label>
-        <select id="trackName">
+        <select id="trackName" onchange="checkForExistingData()">
             <option value="">Select Track</option>
             <option value="TrackA">Track A</option>
             <option value="TrackB">Track B</option>
             <option value="TrackC">Track C</option>
         </select>
-
         <label for="raceDate">Date:</label>
-        <input type="date" id="raceDate">
-
+        <input type="date" id="raceDate" onchange="checkForExistingData()">
         <button onclick="saveData()">Save</button>
-
         <table>
-            <thead>
-                <tr>
-                    <th>Race Number</th>
-                    <th>Saddle Pad</th>
-                    <th>Horse Name</th>
-                    <th>Change</th>
-                </tr>
-            </thead>
+            <thead><tr><th>Race Number</th><th>Saddle Pad</th><th>Horse Name</th><th>Change</th><th>Action</th></tr></thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
