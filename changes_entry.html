@@ -218,7 +218,7 @@
 
 
 		
-		function downloadPDF() {
+function downloadPDF() {
     if (!window.jspdf) {
         alert("Error: jsPDF library is not loaded.");
         return;
@@ -302,37 +302,39 @@
 
         doc.rect(14, startY, columnWidths[0] + columnWidths[1] + columnWidths[2] + columnWidths[3] + columnWidths[4], rowHeight, "F");
 
-        // Define colors for Saddle Pad
-        let colors = {
-            1: { bg: [255, 0, 0], text: [255, 255, 255] }, // Red
-            2: { bg: [0, 0, 255], text: [255, 255, 255] }, // Blue
-            3: { bg: [255, 255, 255], text: [0, 0, 0] }, // White
-            4: { bg: [0, 128, 0], text: [255, 255, 255] }, // Green
-            5: { bg: [0, 0, 0], text: [255, 255, 255] }, // Black
-            6: { bg: [255, 255, 0], text: [0, 0, 0] }, // Yellow
-            7: { bg: [255, 105, 180], text: [255, 255, 255] }, // Pink
-            8: { bg: [128, 128, 128], text: [255, 255, 255] }, // Grey
-            9: { bg: [128, 0, 128], text: [255, 255, 255] }, // Purple
-            10: { bg: [255, 0, 0], text: [255, 255, 255], half: [0, 0, 255] }, // Half Red/Half Blue
-            11: { bg: [173, 216, 230], text: [0, 0, 0] }, // Light Blue
-            12: { bg: [139, 69, 19], text: [255, 255, 255] }, // Brown
-        };
-
-        let defaultColor = { bg: [50, 205, 50], text: [0, 0, 0] }; // Lime Green for others
-
-        let colorConfig = colors[entry.saddlePad] || defaultColor;
-
+        doc.setFontSize(8);
         doc.setTextColor(0, 0, 0);
-        doc.text(`${entry.raceNumber}`, 18, startY + 7);
-        doc.text(`${entry.horseName}`, 58, startY + 7);
-        doc.text(`${entry.category}`, 94, startY + 7);
-        doc.text(wrappedText, 134, startY + 5);
+
+        let centerY = startY + rowHeight / 2 + 2; // ✅ Center text vertically
+
+        doc.text(`${entry.raceNumber}`, 18, centerY);
+        doc.text(`${entry.horseName}`, 58, centerY);
+        doc.text(`${entry.category}`, 94, centerY);
+        doc.text(wrappedText, 134, startY + 5); // ✅ Proper alignment for multi-line text
 
         // ✅ **Add Saddle Pad Color Box**
         if (entry.saddlePad !== -1) {
             let saddleX = 37;
-            let saddleY = startY + 2;
+            let saddleY = startY + (rowHeight / 2) - 3; // ✅ Centered vertically
             let squareSize = 6;
+
+            let colors = {
+                1: { bg: [255, 0, 0], text: [255, 255, 255] }, // Red
+                2: { bg: [0, 0, 255], text: [255, 255, 255] }, // Blue
+                3: { bg: [255, 255, 255], text: [0, 0, 0] }, // White
+                4: { bg: [0, 128, 0], text: [255, 255, 255] }, // Green
+                5: { bg: [0, 0, 0], text: [255, 255, 255] }, // Black
+                6: { bg: [255, 255, 0], text: [0, 0, 0] }, // Yellow
+                7: { bg: [255, 105, 180], text: [255, 255, 255] }, // Pink
+                8: { bg: [128, 128, 128], text: [255, 255, 255] }, // Grey
+                9: { bg: [128, 0, 128], text: [255, 255, 255] }, // Purple
+                10: { bg: [255, 0, 0], text: [255, 255, 255], half: [0, 0, 255] }, // Half Red/Half Blue
+                11: { bg: [173, 216, 230], text: [0, 0, 0] }, // Light Blue
+                12: { bg: [139, 69, 19], text: [255, 255, 255] }, // Brown
+            };
+
+            let defaultColor = { bg: [50, 205, 50], text: [0, 0, 0] }; // Lime Green for others
+            let colorConfig = colors[entry.saddlePad] || defaultColor;
 
             if (entry.saddlePad == 10) {
                 doc.setFillColor(...colorConfig.bg);
@@ -349,7 +351,6 @@
             doc.text(`${entry.saddlePad}`, saddleX + 2.5, saddleY + 4.5, { align: "center" });
         }
 
-        // ✅ **Black horizontal lines for clear separation**
         doc.setDrawColor(0, 0, 0);
         doc.line(14, startY + rowHeight, 184, startY + rowHeight);
 
@@ -362,6 +363,7 @@
 
     doc.save(`Race_Changes_${trackName}_${raceDate}.pdf`);
 }
+
 
 
  function addRow(entry = {}) {
