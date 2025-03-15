@@ -15,8 +15,16 @@
             text-align: center;
             color: #ffffff;
         }
+        .login-container {
+            max-width: 300px;
+            margin: 100px auto;
+            padding: 20px;
+            background: #1e1e1e;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.1);
+        }
         .container {
-            max-width: 1200px;
+            max-width: 900px;
             margin: 0 auto;
             background: #1e1e1e;
             padding: 20px;
@@ -38,7 +46,7 @@
             box-sizing: border-box;
         }
         .changeText {
-            height: 150px;
+            height: 50px;
             resize: vertical;
         }
         button {
@@ -61,6 +69,7 @@
             color: white;
             cursor: pointer;
             border-radius: 5px;
+            display: none;
         }
         .deleteBtn:hover {
             background-color: #c82333;
@@ -87,24 +96,40 @@
         td:nth-child(3) { width: 25%; }
         td:nth-child(4) { width: 45%; }
         td:nth-child(5) { width: 10%; }
+        .hidden {
+            display: none;
+        }
     </style>
     <script>
+        const judgesMapping = {
+            "Judges1": "Charlottetown",
+            "Judges2": "Summerside",
+            "Judges3": "Inverness",
+            "Judges4": "Northside Downs",
+            "Judges5": "Truro",
+            "Judges6": "Woodstock",
+            "Judges7": "TheLoop"
+        };
+        
+        function validateLogin() {
+            const password = document.getElementById("passwordInput").value;
+            if (judgesMapping[password]) {
+                document.getElementById("trackName").innerHTML = `<option value="${judgesMapping[password]}">${judgesMapping[password]}</option>`;
+                document.getElementById("loginPage").classList.add("hidden");
+                document.getElementById("raceChangesPage").classList.remove("hidden");
+            } else {
+                alert("Invalid Judges Number");
+            }
+        }
+
         function checkForExistingData() {
             const trackName = document.getElementById('trackName').value;
             const raceDate = document.getElementById('raceDate').value;
             if (!trackName || !raceDate) return;
 
             const fileName = `${trackName}_${raceDate}_changes.json`;
-            const fileUrl = `/json/${fileName}`;
-
-            fetch(fileUrl)
-                .then(response => {
-                    if (response.ok) {
-                        return response.json();
-                    } else {
-                        throw new Error('File not found');
-                    }
-                })
+            fetch(`/json/${fileName}`)
+                .then(response => response.ok ? response.json() : Promise.reject('File not found'))
                 .then(data => {
                     if (confirm("A saved file exists for this track and date. Do you want to reload it?")) {
                         loadExistingData(data);
@@ -119,10 +144,9 @@
             data.forEach(entry => {
                 addRow(entry);
             });
-            addRow(); // Ensure at least one empty row is always available
+            addRow();
         }
-
-        function saveData() {
+		function saveData() {
             const trackName = document.getElementById('trackName').value;
             const raceDate = document.getElementById('raceDate').value;
             if (!trackName || !raceDate) {
@@ -222,17 +246,19 @@
     </script>
 </head>
 <body>
-    <div class="container">
+    <div class="login-container" id="loginPage">
+        <h2>Enter Judges Number</h2>
+        <input type="password" id="passwordInput" placeholder="Enter Judges Number">
+        <button onclick="validateLogin()">Login</button>
+    </div>
+    
+    <div class="container hidden" id="raceChangesPage">
         <h2>Race Changes</h2>
         <label for="trackName">Track Name:</label>
-        <select id="trackName" onchange="checkForExistingData()">
-            <option value="">Select Track</option>
-            <option value="TrackA">Track A</option>
-            <option value="TrackB">Track B</option>
-            <option value="TrackC">Track C</option>
-        </select>
+        <select id="trackName" onchange="checkForExistingData()"></select>
         <label for="raceDate">Date:</label>
         <input type="date" id="raceDate" onchange="checkForExistingData()">
+        <button onclick="addRow()">Add Row</button>
         <button onclick="saveData()">Save</button>
         <table>
             <thead><tr><th>Race Number</th><th>Saddle Pad</th><th>Horse Name</th><th>Change</th><th>Action</th></tr></thead>
