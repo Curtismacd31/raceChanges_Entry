@@ -229,12 +229,21 @@ function downloadPDF() {
 
     let trackName = document.getElementById('trackName').value || "Unknown Track";
     let raceDate = document.getElementById('raceDate').value || "No Date";
+	
+	 // ✅ Get Current Time (HH:MM AM/PM format)
+    let now = new Date();
+    let hours = now.getHours();
+    let minutes = now.getMinutes().toString().padStart(2, "0");
+    let ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12 || 12; // Convert to 12-hour format
+    let creationTime = `${hours}:${minutes} ${ampm}`;
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.text(`Race Changes - ${trackName}`, 14, 20);
     doc.setFontSize(12);
     doc.text(`Date: ${raceDate}`, 14, 30);
+	doc.text(`Creation Time: ${creationTime}`, 14, 36); // ✅ Added Creation Time
 
     let startY = 40; // Start position for the table
     let columnWidths = [20, 20, 35, 40, 70]; // [Race #, Saddle Pad, Horse Name, Category, Change]
