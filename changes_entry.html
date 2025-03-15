@@ -154,280 +154,308 @@
             addRow();
         }
 		function saveData() {
-			const trackName = document.getElementById('trackName').value;
-			const raceDate = document.getElementById('raceDate').value;
-			if (!trackName || !raceDate) {
-				alert("Please select Track Name and Date.");
-				return;
-			}
+    const trackName = document.getElementById('trackName').value;
+    const raceDate = document.getElementById('raceDate').value;
+    if (!trackName || !raceDate) {
+        alert("Please select Track Name and Date.");
+        return;
+    }
 
-			let data = [];
-			const rows = document.querySelectorAll("tbody tr");
+    let data = [];
+    const rows = document.querySelectorAll("tbody tr");
 
-			rows.forEach(row => {
-				const raceNumber = row.querySelector(".raceNumber").value;
-				let saddlePad = row.querySelector(".saddlePad").value;
-				let horseName = row.querySelector(".horseName").value;
-				const changeText = row.querySelector(".changeText").value;
+    rows.forEach(row => {
+        const raceNumber = row.querySelector(".raceNumber").value;
+        let saddlePad = row.querySelector(".saddlePad").value;
+        let horseName = row.querySelector(".horseName").value;
+        const category = row.querySelector(".changeCategory").value;
+        const changeText = row.querySelector(".changeText").value;
 
-				// ✅ Only save if Race Number and Change are entered
-				if (!raceNumber || !changeText) return;
+        // ✅ Only save if Race Number and Change are entered
+        if (!raceNumber || !changeText) return;
 
-				// ✅ Replace "N/A" or empty values with proper formatting
-				saddlePad = saddlePad === "N/A" || saddlePad === "" ? "" : saddlePad;
-				horseName = horseName === "N/A" || horseName === "" ? "" : horseName;
+        // ✅ Replace "N/A" or empty values with proper formatting
+        saddlePad = saddlePad === "N/A" || saddlePad === "" ? "" : saddlePad;
+        horseName = horseName === "N/A" || horseName === "" ? "" : horseName;
 
-				data.push({
-					raceNumber: parseInt(raceNumber),
-					saddlePad: saddlePad === "" ? -1 : parseInt(saddlePad), // Sort blank saddle pads first
-					horseName,
-					change: changeText
-				});
-			});
+        data.push({
+            raceNumber: parseInt(raceNumber),
+            saddlePad: saddlePad === "" ? -1 : parseInt(saddlePad), // Sort blank saddle pads first
+            horseName,
+            category,
+            change: changeText
+        });
+    });
 
-			// ✅ Sort by Race Number, then place blank saddle pads first
-			data.sort((a, b) => {
-				if (a.raceNumber !== b.raceNumber) {
-					return a.raceNumber - b.raceNumber;
-				}
-				return a.saddlePad - b.saddlePad; // Places blank (-1) saddle pads first
-			});
+    // ✅ Sort by Race Number, then place blank saddle pads first
+    data.sort((a, b) => {
+        if (a.raceNumber !== b.raceNumber) {
+            return a.raceNumber - b.raceNumber;
+        }
+        return a.saddlePad - b.saddlePad; // Places blank (-1) saddle pads first
+    });
 
-			// ✅ Convert saddle pads back to strings (blanks stay blank)
-			data = data.map(entry => ({
-				raceNumber: entry.raceNumber.toString(),
-				saddlePad: entry.saddlePad === -1 ? "" : entry.saddlePad.toString(),
-				horseName: entry.horseName,
-				change: entry.change
-			}));
+    // ✅ Convert saddle pads back to strings (blanks stay blank)
+    data = data.map(entry => ({
+        raceNumber: entry.raceNumber.toString(),
+        saddlePad: entry.saddlePad === -1 ? "" : entry.saddlePad.toString(),
+        horseName: entry.horseName,
+        category: entry.category,
+        change: entry.change
+    }));
 
-			const fileName = `${trackName}_${raceDate}_changes.json`;
+    const fileName = `${trackName}_${raceDate}_changes.json`;
 
-			fetch('/save', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ fileName, data })
-			})
-			.then(response => response.text())
-			.then(result => alert(result))
-			.catch(error => console.error('Error:', error));
-		}
+    fetch('/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileName, data })
+    })
+    .then(response => response.text())
+    .then(result => alert(result))
+    .catch(error => console.error('Error:', error));
+}
+
 
 		
 		function downloadPDF() {
-			if (!window.jspdf) {
-				alert("Error: jsPDF library is not loaded.");
-				return;
-			}
+    if (!window.jspdf) {
+        alert("Error: jsPDF library is not loaded.");
+        return;
+    }
 
-			const { jsPDF } = window.jspdf;
-			const doc = new jsPDF();
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
 
-			let trackName = document.getElementById('trackName').value || "Unknown Track";
-			let raceDate = document.getElementById('raceDate').value || "No Date";
+    let trackName = document.getElementById('trackName').value || "Unknown Track";
+    let raceDate = document.getElementById('raceDate').value || "No Date";
 
-			doc.setFont("helvetica", "bold");
-			doc.setFontSize(16);
-			doc.text(`Race Changes - ${trackName}`, 14, 20);
-			doc.setFontSize(12);
-			doc.text(`Date: ${raceDate}`, 14, 30);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text(`Race Changes - ${trackName}`, 14, 20);
+    doc.setFontSize(12);
+    doc.text(`Date: ${raceDate}`, 14, 30);
 
-			let startY = 40; // Start position for the table
-			let rowHeight = 10;
-			let columnWidths = [20, 20, 50, 90]; // [Race #, Saddle Pad, Horse Name, Change]
+    let startY = 40; // Start position for the table
+    let columnWidths = [20, 20, 35, 40, 70]; // [Race #, Saddle Pad, Horse Name, Category, Change]
 
-			let rows = document.querySelectorAll("tbody tr");
+    let rows = document.querySelectorAll("tbody tr");
 
-			// Extract and Sort Data
-			let data = [];
+    // Extract and Sort Data
+    let data = [];
 
-			rows.forEach((row) => {
-				let raceNumber = row.querySelector(".raceNumber").value || "N/A";
-				let saddlePad = row.querySelector(".saddlePad").value || "N/A";
-				let horseName = row.querySelector(".horseName").value || "N/A";
-				let change = row.querySelector(".changeText").value || "N/A";
+    rows.forEach((row) => {
+        let raceNumber = row.querySelector(".raceNumber").value || "N/A";
+        let saddlePad = row.querySelector(".saddlePad").value || "N/A";
+        let horseName = row.querySelector(".horseName").value || "N/A";
+        let category = row.querySelector(".changeCategory").value || "N/A";
+        let change = row.querySelector(".changeText").value || "N/A";
 
-				if (change === "N/A") return; // Skip empty changes
+        if (change === "N/A") return; // Skip empty changes
 
-				// If Saddle Pad or Horse Name is "N/A", replace with blank
-				saddlePad = saddlePad === "N/A" ? "" : saddlePad;
-				horseName = horseName === "N/A" ? "" : horseName;
+        saddlePad = saddlePad === "N/A" ? "" : saddlePad;
+        horseName = horseName === "N/A" ? "" : horseName;
 
-				data.push({
-					raceNumber: parseInt(raceNumber),
-					saddlePad: saddlePad === "" ? -1 : parseInt(saddlePad), // Set blank saddle pads to -1 for sorting
-					horseName,
-					change
-				});
-			});
-
-			// ✅ **Sort by Race Number, then place blank saddle pads at the top, followed by numerical order**
-			data.sort((a, b) => {
-				if (a.raceNumber !== b.raceNumber) {
-					return a.raceNumber - b.raceNumber;
-				}
-				return a.saddlePad - b.saddlePad; // Places blanks (-1) at the top
-			});
-
-			// Table Headers
-			doc.setFontSize(10);
-			doc.setTextColor(255, 255, 255);
-			doc.setFillColor(50, 50, 50);
-			doc.rect(14, startY, columnWidths[0], rowHeight, "F");
-			doc.rect(34, startY, columnWidths[1], rowHeight, "F");
-			doc.rect(54, startY, columnWidths[2], rowHeight, "F");
-			doc.rect(104, startY, columnWidths[3], rowHeight, "F");
-
-			doc.text("Race #", 18, startY + 7);
-			doc.text("Saddle", 38, startY + 7);
-			doc.text("Horse Name", 58, startY + 7);
-			doc.text("Change", 108, startY + 7);
-
-			startY += rowHeight;
-
-			let previousRace = null; // Track previous race number
-
-			data.forEach((entry, index) => {
-				let y = startY + (index * rowHeight);
-
-				// ✅ **Alternating row colors**
-				if (index % 2 === 0) {
-					doc.setFillColor(240, 240, 240); // Light gray
-				} else {
-					doc.setFillColor(255, 255, 255); // White
-				}
-				doc.rect(14, y, columnWidths[0] + columnWidths[1] + columnWidths[2] + columnWidths[3], rowHeight, "F");
-
-				// Define colors for Saddle Pad
-				let colors = {
-					1: { bg: [255, 0, 0], text: [255, 255, 255] }, // Red
-					2: { bg: [0, 0, 255], text: [255, 255, 255] }, // Blue
-					3: { bg: [255, 255, 255], text: [0, 0, 0] }, // White
-					4: { bg: [0, 128, 0], text: [255, 255, 255] }, // Green
-					5: { bg: [0, 0, 0], text: [255, 255, 255] }, // Black
-					6: { bg: [255, 255, 0], text: [0, 0, 0] }, // Yellow
-					7: { bg: [255, 105, 180], text: [255, 255, 255] }, // Pink
-					8: { bg: [128, 128, 128], text: [255, 255, 255] }, // Grey
-					9: { bg: [128, 0, 128], text: [255, 255, 255] }, // Purple
-					10: { bg: [255, 0, 0], text: [255, 255, 255], half: [0, 0, 255] }, // Half Red/Half Blue
-					11: { bg: [173, 216, 230], text: [0, 0, 0] }, // Light Blue
-					12: { bg: [139, 69, 19], text: [255, 255, 255] }, // Brown
-				};
-
-				let defaultColor = { bg: [50, 205, 50], text: [0, 0, 0] }; // Lime Green for others
-
-				let colorConfig = colors[entry.saddlePad] || defaultColor;
-
-				doc.setTextColor(0, 0, 0);
-				doc.text(`${entry.raceNumber}`, 18, y + 7);
-				doc.text(`${entry.horseName}`, 58, y + 7);
-				doc.text(`${entry.change}`, 108, y + 7);
-
-				// Draw the colored saddle pad square (if it's not blank)
-				if (entry.saddlePad !== -1) {
-					let saddleX = 37; // Position inside the saddle pad cell
-					let saddleY = y + 2;
-					let squareSize = 6;
-
-					if (entry.saddlePad == 10) {
-						doc.setFillColor(...colorConfig.bg);
-						doc.rect(saddleX, saddleY, squareSize / 2, squareSize, "F");
-						doc.setFillColor(...colorConfig.half);
-						doc.rect(saddleX + squareSize / 2, saddleY, squareSize / 2, squareSize, "F");
-					} else {
-						doc.setFillColor(...colorConfig.bg);
-						doc.rect(saddleX, saddleY, squareSize, squareSize, "F");
-					}
-
-					doc.setTextColor(...colorConfig.text);
-					doc.setFontSize(8);
-					doc.text(`${entry.saddlePad}`, saddleX + 2.5, saddleY + 4.5, { align: "center" });
-				}
-
-				// ✅ **Black horizontal lines for clear separation**
-				doc.setDrawColor(0, 0, 0); // Black line
-				doc.line(14, y + rowHeight, 184, y + rowHeight);
-
-				// If the race number changes, add an extra space for clarity
-				if (previousRace !== null && previousRace !== entry.raceNumber) {
-					startY += 2;
-				}
-				previousRace = entry.raceNumber;
-			});
-
-			if (data.length === 0) {
-				doc.text("No valid race changes to display.", 14, startY + 10);
-			}
-
-			doc.save(`Race_Changes_${trackName}_${raceDate}.pdf`);
-		}
-
-
-        function addRow(entry = {}) {
-            const tableBody = document.getElementById("tableBody");
-            
-            let row = document.createElement("tr");
-            
-            let raceCell = document.createElement("td");
-            let raceSelect = document.createElement("select");
-            raceSelect.className = "raceNumber";
-            raceSelect.innerHTML = '<option value="">Select</option>';
-            for (let j = 1; j <= 30; j++) {
-                let option = document.createElement("option");
-                option.value = j;
-                option.textContent = j;
-                if (entry.raceNumber == j) option.selected = true;
-                raceSelect.appendChild(option);
-            }
-            raceSelect.addEventListener("change", function() {
-                if (this.value) addRow();
-            });
-            raceCell.appendChild(raceSelect);
-            row.appendChild(raceCell);
-            
-            let saddleCell = document.createElement("td");
-            let saddleSelect = document.createElement("select");
-            saddleSelect.className = "saddlePad";
-            saddleSelect.innerHTML = '<option value="">Select</option>';
-            for (let k = 1; k <= 20; k++) {
-                let option = document.createElement("option");
-                option.value = k;
-                option.textContent = k;
-                if (entry.saddlePad == k) option.selected = true;
-                saddleSelect.appendChild(option);
-            }
-            saddleCell.appendChild(saddleSelect);
-            row.appendChild(saddleCell);
-            
-            let horseCell = document.createElement("td");
-            let horseInput = document.createElement("input");
-            horseInput.type = "text";
-            horseInput.className = "horseName";
-            horseInput.value = entry.horseName || "";
-            horseCell.appendChild(horseInput);
-            row.appendChild(horseCell);
-            
-            let changeCell = document.createElement("td");
-            let changeInput = document.createElement("textarea");
-            changeInput.className = "changeText";
-            changeInput.value = entry.change || "";
-            changeCell.appendChild(changeInput);
-            row.appendChild(changeCell);
-            
-            let deleteCell = document.createElement("td");
-            let deleteButton = document.createElement("button");
-            deleteButton.className = "deleteBtn";
-            deleteButton.textContent = "Delete";
-            deleteButton.onclick = function() { row.remove(); };
-            deleteCell.appendChild(deleteButton);
-            row.appendChild(deleteCell);
-            
-            tableBody.appendChild(row);
-        }
-        
-        document.addEventListener("DOMContentLoaded", function() {
-            addRow();
+        data.push({
+            raceNumber: parseInt(raceNumber),
+            saddlePad: saddlePad === "" ? -1 : parseInt(saddlePad),
+            horseName,
+            category,
+            change
         });
+    });
+
+    // ✅ Sorting logic
+    data.sort((a, b) => {
+        if (a.raceNumber !== b.raceNumber) return a.raceNumber - b.raceNumber;
+        return a.saddlePad - b.saddlePad;
+    });
+
+    // Table Headers
+    doc.setFontSize(10);
+    doc.setTextColor(255, 255, 255);
+    doc.setFillColor(50, 50, 50);
+    doc.rect(14, startY, columnWidths[0], 10, "F");
+    doc.rect(34, startY, columnWidths[1], 10, "F");
+    doc.rect(54, startY, columnWidths[2], 10, "F");
+    doc.rect(89, startY, columnWidths[3], 10, "F");
+    doc.rect(129, startY, columnWidths[4], 10, "F");
+
+    doc.text("Race #", 18, startY + 7);
+    doc.text("Saddle", 38, startY + 7);
+    doc.text("Horse Name", 58, startY + 7);
+    doc.text("Category", 94, startY + 7);
+    doc.text("Change", 134, startY + 7);
+
+    startY += 10;
+
+    data.forEach((entry, index) => {
+        let textWidth = columnWidths[4] - 5;
+        let wrappedText = doc.splitTextToSize(entry.change, textWidth);
+        let rowHeight = Math.max(10, wrappedText.length * 5); // Expands row height dynamically
+
+        if (index % 2 === 0) {
+            doc.setFillColor(240, 240, 240);
+        } else {
+            doc.setFillColor(255, 255, 255);
+        }
+
+        doc.rect(14, startY, columnWidths[0] + columnWidths[1] + columnWidths[2] + columnWidths[3] + columnWidths[4], rowHeight, "F");
+
+        // Define colors for Saddle Pad
+        let colors = {
+            1: { bg: [255, 0, 0], text: [255, 255, 255] }, // Red
+            2: { bg: [0, 0, 255], text: [255, 255, 255] }, // Blue
+            3: { bg: [255, 255, 255], text: [0, 0, 0] }, // White
+            4: { bg: [0, 128, 0], text: [255, 255, 255] }, // Green
+            5: { bg: [0, 0, 0], text: [255, 255, 255] }, // Black
+            6: { bg: [255, 255, 0], text: [0, 0, 0] }, // Yellow
+            7: { bg: [255, 105, 180], text: [255, 255, 255] }, // Pink
+            8: { bg: [128, 128, 128], text: [255, 255, 255] }, // Grey
+            9: { bg: [128, 0, 128], text: [255, 255, 255] }, // Purple
+            10: { bg: [255, 0, 0], text: [255, 255, 255], half: [0, 0, 255] }, // Half Red/Half Blue
+            11: { bg: [173, 216, 230], text: [0, 0, 0] }, // Light Blue
+            12: { bg: [139, 69, 19], text: [255, 255, 255] }, // Brown
+        };
+
+        let defaultColor = { bg: [50, 205, 50], text: [0, 0, 0] }; // Lime Green for others
+
+        let colorConfig = colors[entry.saddlePad] || defaultColor;
+
+        doc.setTextColor(0, 0, 0);
+        doc.text(`${entry.raceNumber}`, 18, startY + 7);
+        doc.text(`${entry.horseName}`, 58, startY + 7);
+        doc.text(`${entry.category}`, 94, startY + 7);
+        doc.text(wrappedText, 134, startY + 5);
+
+        // ✅ **Add Saddle Pad Color Box**
+        if (entry.saddlePad !== -1) {
+            let saddleX = 37;
+            let saddleY = startY + 2;
+            let squareSize = 6;
+
+            if (entry.saddlePad == 10) {
+                doc.setFillColor(...colorConfig.bg);
+                doc.rect(saddleX, saddleY, squareSize / 2, squareSize, "F");
+                doc.setFillColor(...colorConfig.half);
+                doc.rect(saddleX + squareSize / 2, saddleY, squareSize / 2, squareSize, "F");
+            } else {
+                doc.setFillColor(...colorConfig.bg);
+                doc.rect(saddleX, saddleY, squareSize, squareSize, "F");
+            }
+
+            doc.setTextColor(...colorConfig.text);
+            doc.setFontSize(8);
+            doc.text(`${entry.saddlePad}`, saddleX + 2.5, saddleY + 4.5, { align: "center" });
+        }
+
+        // ✅ **Black horizontal lines for clear separation**
+        doc.setDrawColor(0, 0, 0);
+        doc.line(14, startY + rowHeight, 184, startY + rowHeight);
+
+        startY += rowHeight;
+    });
+
+    if (data.length === 0) {
+        doc.text("No valid race changes to display.", 14, startY + 10);
+    }
+
+    doc.save(`Race_Changes_${trackName}_${raceDate}.pdf`);
+}
+
+
+ function addRow(entry = {}) {
+    const tableBody = document.getElementById("tableBody");
+    
+    let row = document.createElement("tr");
+    
+    // Race Number Dropdown
+    let raceCell = document.createElement("td");
+    let raceSelect = document.createElement("select");
+    raceSelect.className = "raceNumber";
+    raceSelect.innerHTML = '<option value="">Select</option>';
+    for (let j = 1; j <= 30; j++) {
+        let option = document.createElement("option");
+        option.value = j;
+        option.textContent = j;
+        if (entry.raceNumber == j) option.selected = true;
+        raceSelect.appendChild(option);
+    }
+    raceSelect.addEventListener("change", function() {
+        if (this.value) addRow();
+    });
+    raceCell.appendChild(raceSelect);
+    row.appendChild(raceCell);
+    
+    // Saddle Pad Dropdown
+    let saddleCell = document.createElement("td");
+    let saddleSelect = document.createElement("select");
+    saddleSelect.className = "saddlePad";
+    saddleSelect.innerHTML = '<option value="">Select</option>';
+    for (let k = 1; k <= 20; k++) {
+        let option = document.createElement("option");
+        option.value = k;
+        option.textContent = k;
+        if (entry.saddlePad == k) option.selected = true;
+        saddleSelect.appendChild(option);
+    }
+    saddleCell.appendChild(saddleSelect);
+    row.appendChild(saddleCell);
+    
+    // Horse Name Input
+    let horseCell = document.createElement("td");
+    let horseInput = document.createElement("input");
+    horseInput.type = "text";
+    horseInput.className = "horseName";
+    horseInput.value = entry.horseName || "";
+    horseCell.appendChild(horseInput);
+    row.appendChild(horseCell);
+
+    // ✅ Category Dropdown
+    let categoryCell = document.createElement("td");
+    let categorySelect = document.createElement("select");
+    categorySelect.className = "changeCategory";
+    categorySelect.innerHTML = `
+        <option value="">Select Category</option>
+        <option value="Driver Change">Driver Change</option>
+        <option value="Trainer Change">Trainer Change</option>
+        <option value="Owner Change">Owner Change</option>
+        <option value="Medication Change">Medication Change</option>
+        <option value="SCRATCHED">SCRATCHED</option>
+        <option value="Equipment Change">Equipment Change</option>
+        <option value="Claimed">Claimed</option>
+        <option value="Other">Other</option>
+    `;
+    if (entry.category) {
+        categorySelect.value = entry.category;
+    }
+    categoryCell.appendChild(categorySelect);
+    row.appendChild(categoryCell);
+
+    // Change Text Area
+    let changeCell = document.createElement("td");
+    let changeInput = document.createElement("textarea");
+    changeInput.className = "changeText";
+    changeInput.value = entry.change || "";
+    changeCell.appendChild(changeInput);
+    row.appendChild(changeCell);
+    
+    // Delete Button
+    let deleteCell = document.createElement("td");
+    let deleteButton = document.createElement("button");
+    deleteButton.className = "deleteBtn";
+    deleteButton.textContent = "Delete";
+    deleteButton.onclick = function() { row.remove(); };
+    deleteCell.appendChild(deleteButton);
+    row.appendChild(deleteCell);
+    
+    tableBody.appendChild(row);
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    addRow();
+});
+
     </script>
 </head>
 <body>
@@ -447,7 +475,7 @@
         <button onclick="saveData()">Save</button>
 		<button class="downloadBtn" onclick="downloadPDF()">Download PDF</button>
         <table>
-            <thead><tr><th>Race Number</th><th>Saddle Pad</th><th>Horse Name</th><th>Change</th><th>Action</th></tr></thead>
+            <thead><tr><th>Race Number</th><th>Saddle Pad</th><th>Horse Name</th><th>Category</th><th>Change</th><th>Action</th></tr></thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
