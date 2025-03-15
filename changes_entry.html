@@ -64,12 +64,6 @@
         button:hover {
             background-color: #218838;
         }
-		.downloadBtn {
-            background-color: #007bff;
-        }
-        .downloadBtn:hover {
-            background-color: #0056b3;
-        }
         .deleteBtn {
             background-color: #dc3545;
             padding: 5px 10px;
@@ -77,7 +71,6 @@
             color: white;
             cursor: pointer;
             border-radius: 5px;
-            display: none;
         }
         .deleteBtn:hover {
             background-color: #c82333;
@@ -155,161 +148,215 @@
             addRow();
         }
 		function saveData() {
-            const trackName = document.getElementById('trackName').value;
-            const raceDate = document.getElementById('raceDate').value;
-            if (!trackName || !raceDate) {
-                alert("Please select Track Name and Date.");
-                return;
-            }
+			const trackName = document.getElementById('trackName').value;
+			const raceDate = document.getElementById('raceDate').value;
+			if (!trackName || !raceDate) {
+				alert("Please select Track Name and Date.");
+				return;
+			}
 
-            const data = [];
-            const rows = document.querySelectorAll("tbody tr");
-            rows.forEach(row => {
-                const raceNumber = row.querySelector(".raceNumber").value;
-                const saddlePad = row.querySelector(".saddlePad").value;
-                const horseName = row.querySelector(".horseName").value;
-                const changeText = row.querySelector(".changeText").value;
-                if (raceNumber && saddlePad && horseName) {
-                    data.push({ raceNumber, saddlePad, horseName, change: changeText });
-                }
-            });
+			let data = [];
+			const rows = document.querySelectorAll("tbody tr");
 
-            const fileName = `${trackName}_${raceDate}_changes.json`;
-            
-            fetch('/save', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fileName, data })
-            })
-            .then(response => response.text())
-            .then(result => alert(result))
-            .catch(error => console.error('Error:', error));
-        }
+			rows.forEach(row => {
+				const raceNumber = row.querySelector(".raceNumber").value;
+				let saddlePad = row.querySelector(".saddlePad").value;
+				let horseName = row.querySelector(".horseName").value;
+				const changeText = row.querySelector(".changeText").value;
+
+				// ✅ Only save if Race Number and Change are entered
+				if (!raceNumber || !changeText) return;
+
+				// ✅ Replace "N/A" or empty values with proper formatting
+				saddlePad = saddlePad === "N/A" || saddlePad === "" ? "" : saddlePad;
+				horseName = horseName === "N/A" || horseName === "" ? "" : horseName;
+
+				data.push({
+					raceNumber: parseInt(raceNumber),
+					saddlePad: saddlePad === "" ? -1 : parseInt(saddlePad), // Sort blank saddle pads first
+					horseName,
+					change: changeText
+				});
+			});
+
+			// ✅ Sort by Race Number, then place blank saddle pads first
+			data.sort((a, b) => {
+				if (a.raceNumber !== b.raceNumber) {
+					return a.raceNumber - b.raceNumber;
+				}
+				return a.saddlePad - b.saddlePad; // Places blank (-1) saddle pads first
+			});
+
+			// ✅ Convert saddle pads back to strings (blanks stay blank)
+			data = data.map(entry => ({
+				raceNumber: entry.raceNumber.toString(),
+				saddlePad: entry.saddlePad === -1 ? "" : entry.saddlePad.toString(),
+				horseName: entry.horseName,
+				change: entry.change
+			}));
+
+			const fileName = `${trackName}_${raceDate}_changes.json`;
+
+			fetch('/save', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ fileName, data })
+			})
+			.then(response => response.text())
+			.then(result => alert(result))
+			.catch(error => console.error('Error:', error));
+		}
+
 		
 		function downloadPDF() {
-    if (!window.jspdf) {
-        alert("Error: jsPDF library is not loaded.");
-        return;
-    }
+			if (!window.jspdf) {
+				alert("Error: jsPDF library is not loaded.");
+				return;
+			}
 
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+			const { jsPDF } = window.jspdf;
+			const doc = new jsPDF();
 
-    let trackName = document.getElementById('trackName').value || "Unknown Track";
-    let raceDate = document.getElementById('raceDate').value || "No Date";
+			let trackName = document.getElementById('trackName').value || "Unknown Track";
+			let raceDate = document.getElementById('raceDate').value || "No Date";
 
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.text(`Race Changes - ${trackName}`, 14, 20);
-    doc.setFontSize(12);
-    doc.text(`Date: ${raceDate}`, 14, 30);
+			doc.setFont("helvetica", "bold");
+			doc.setFontSize(16);
+			doc.text(`Race Changes - ${trackName}`, 14, 20);
+			doc.setFontSize(12);
+			doc.text(`Date: ${raceDate}`, 14, 30);
 
-    let startY = 40; // Start position for the table
-    let rowHeight = 10;
-    let columnWidths = [20, 20, 50, 70]; // [Race #, Saddle Pad, Horse Name, Change]
-    
-    let rows = document.querySelectorAll("tbody tr");
+			let startY = 40; // Start position for the table
+			let rowHeight = 10;
+			let columnWidths = [20, 20, 50, 90]; // [Race #, Saddle Pad, Horse Name, Change]
 
-    // Table Headers
-    doc.setFontSize(10);
-    doc.setTextColor(255, 255, 255);
-    doc.setFillColor(50, 50, 50);
-    doc.rect(14, startY, columnWidths[0], rowHeight, "F"); 
-    doc.rect(34, startY, columnWidths[1], rowHeight, "F"); 
-    doc.rect(54, startY, columnWidths[2], rowHeight, "F"); 
-    doc.rect(104, startY, columnWidths[3], rowHeight, "F"); 
+			let rows = document.querySelectorAll("tbody tr");
 
-    doc.text("Race #", 18, startY + 7);
-    doc.text("Saddle", 38, startY + 7);
-    doc.text("Horse Name", 58, startY + 7);
-    doc.text("Change", 108, startY + 7);
+			// Extract and Sort Data
+			let data = [];
 
-    startY += rowHeight;
+			rows.forEach((row) => {
+				let raceNumber = row.querySelector(".raceNumber").value || "N/A";
+				let saddlePad = row.querySelector(".saddlePad").value || "N/A";
+				let horseName = row.querySelector(".horseName").value || "N/A";
+				let change = row.querySelector(".changeText").value || "N/A";
 
-    let validRowCount = 0; // Counter to track number of rows
+				if (change === "N/A") return; // Skip empty changes
 
-    rows.forEach((row) => {
-        let raceNumber = row.querySelector(".raceNumber").value || "N/A";
-        let saddlePad = row.querySelector(".saddlePad").value || "N/A";
-        let horseName = row.querySelector(".horseName").value || "N/A";
-        let change = row.querySelector(".changeText").value || "N/A";
+				// If Saddle Pad or Horse Name is "N/A", replace with blank
+				saddlePad = saddlePad === "N/A" ? "" : saddlePad;
+				horseName = horseName === "N/A" ? "" : horseName;
 
-        // ✅ **Skip rows where "Change" is `N/A`**
-        if (change === "N/A") return;
+				data.push({
+					raceNumber: parseInt(raceNumber),
+					saddlePad: saddlePad === "" ? -1 : parseInt(saddlePad), // Set blank saddle pads to -1 for sorting
+					horseName,
+					change
+				});
+			});
 
-        let y = startY + (validRowCount * rowHeight);
-        validRowCount++; // Increment count only for valid rows
+			// ✅ **Sort by Race Number, then place blank saddle pads at the top, followed by numerical order**
+			data.sort((a, b) => {
+				if (a.raceNumber !== b.raceNumber) {
+					return a.raceNumber - b.raceNumber;
+				}
+				return a.saddlePad - b.saddlePad; // Places blanks (-1) at the top
+			});
 
-        // If Saddle Pad or Horse Name is "N/A", replace it with blank
-        saddlePad = saddlePad === "N/A" ? "" : saddlePad;
-        horseName = horseName === "N/A" ? "" : horseName;
+			// Table Headers
+			doc.setFontSize(10);
+			doc.setTextColor(255, 255, 255);
+			doc.setFillColor(50, 50, 50);
+			doc.rect(14, startY, columnWidths[0], rowHeight, "F");
+			doc.rect(34, startY, columnWidths[1], rowHeight, "F");
+			doc.rect(54, startY, columnWidths[2], rowHeight, "F");
+			doc.rect(104, startY, columnWidths[3], rowHeight, "F");
 
-        // Define colors for Saddle Pad
-        let colors = {
-            1: { bg: [255, 0, 0], text: [255, 255, 255] }, // Red
-            2: { bg: [0, 0, 255], text: [255, 255, 255] }, // Blue
-            3: { bg: [255, 255, 255], text: [0, 0, 0] }, // White
-            4: { bg: [0, 128, 0], text: [255, 255, 255] }, // Green
-            5: { bg: [0, 0, 0], text: [255, 255, 255] }, // Black
-            6: { bg: [255, 255, 0], text: [0, 0, 0] }, // Yellow
-            7: { bg: [255, 105, 180], text: [255, 255, 255] }, // Pink
-            8: { bg: [128, 128, 128], text: [255, 255, 255] }, // Grey
-            9: { bg: [128, 0, 128], text: [255, 255, 255] }, // Purple
-            10: { bg: [255, 0, 0], text: [255, 255, 255], half: [0, 0, 255] }, // Half Red/Half Blue
-            11: { bg: [173, 216, 230], text: [0, 0, 0] }, // Light Blue
-            12: { bg: [139, 69, 19], text: [255, 255, 255] }, // Brown
-        };
-        
-        let defaultColor = { bg: [50, 205, 50], text: [0, 0, 0] }; // Lime Green for others
+			doc.text("Race #", 18, startY + 7);
+			doc.text("Saddle", 38, startY + 7);
+			doc.text("Horse Name", 58, startY + 7);
+			doc.text("Change", 108, startY + 7);
 
-        let colorConfig = colors[saddlePad] || defaultColor;
+			startY += rowHeight;
 
-        // Draw table cells
-        doc.setTextColor(0, 0, 0);
-        doc.setFillColor(240, 240, 240);
-        doc.rect(14, y, columnWidths[0], rowHeight, "F");
-        doc.rect(34, y, columnWidths[1], rowHeight, "F");
-        doc.rect(54, y, columnWidths[2], rowHeight, "F");
-        doc.rect(104, y, columnWidths[3], rowHeight, "F");
+			let previousRace = null; // Track previous race number
 
-        doc.text(`${raceNumber}`, 18, y + 7);
-        doc.text(`${horseName}`, 58, y + 7);
-        doc.text(`${change}`, 108, y + 7);
+			data.forEach((entry, index) => {
+				let y = startY + (index * rowHeight);
 
-        // Draw the colored saddle pad square (if it's not blank)
-        if (saddlePad !== "") {
-            let saddleX = 37; // Position inside the saddle pad cell
-            let saddleY = y + 2;
-            let squareSize = 6;
+				// ✅ **Alternating row colors**
+				if (index % 2 === 0) {
+					doc.setFillColor(240, 240, 240); // Light gray
+				} else {
+					doc.setFillColor(255, 255, 255); // White
+				}
+				doc.rect(14, y, columnWidths[0] + columnWidths[1] + columnWidths[2] + columnWidths[3], rowHeight, "F");
 
-            if (saddlePad == 10) {
-                doc.setFillColor(...colorConfig.bg);
-                doc.rect(saddleX, saddleY, squareSize / 2, squareSize, "F");
-                doc.setFillColor(...colorConfig.half);
-                doc.rect(saddleX + squareSize / 2, saddleY, squareSize / 2, squareSize, "F");
-            } else {
-                doc.setFillColor(...colorConfig.bg);
-                doc.rect(saddleX, saddleY, squareSize, squareSize, "F");
-            }
+				// Define colors for Saddle Pad
+				let colors = {
+					1: { bg: [255, 0, 0], text: [255, 255, 255] }, // Red
+					2: { bg: [0, 0, 255], text: [255, 255, 255] }, // Blue
+					3: { bg: [255, 255, 255], text: [0, 0, 0] }, // White
+					4: { bg: [0, 128, 0], text: [255, 255, 255] }, // Green
+					5: { bg: [0, 0, 0], text: [255, 255, 255] }, // Black
+					6: { bg: [255, 255, 0], text: [0, 0, 0] }, // Yellow
+					7: { bg: [255, 105, 180], text: [255, 255, 255] }, // Pink
+					8: { bg: [128, 128, 128], text: [255, 255, 255] }, // Grey
+					9: { bg: [128, 0, 128], text: [255, 255, 255] }, // Purple
+					10: { bg: [255, 0, 0], text: [255, 255, 255], half: [0, 0, 255] }, // Half Red/Half Blue
+					11: { bg: [173, 216, 230], text: [0, 0, 0] }, // Light Blue
+					12: { bg: [139, 69, 19], text: [255, 255, 255] }, // Brown
+				};
 
-            doc.setTextColor(...colorConfig.text);
-            doc.setFontSize(8);
-            doc.text(`${saddlePad}`, saddleX + 2.5, saddleY + 4.5, { align: "center" });
-        }
+				let defaultColor = { bg: [50, 205, 50], text: [0, 0, 0] }; // Lime Green for others
 
-        // Draw horizontal line for readability
-        doc.setDrawColor(200, 200, 200); // Light grey line
-        doc.line(14, y + rowHeight, 184, y + rowHeight);
-    });
+				let colorConfig = colors[entry.saddlePad] || defaultColor;
 
-    if (validRowCount === 0) {
-        doc.text("No valid race changes to display.", 14, startY + 10);
-    }
+				doc.setTextColor(0, 0, 0);
+				doc.text(`${entry.raceNumber}`, 18, y + 7);
+				doc.text(`${entry.horseName}`, 58, y + 7);
+				doc.text(`${entry.change}`, 108, y + 7);
 
-    doc.save(`Race_Changes_${trackName}_${raceDate}.pdf`);
-}
+				// Draw the colored saddle pad square (if it's not blank)
+				if (entry.saddlePad !== -1) {
+					let saddleX = 37; // Position inside the saddle pad cell
+					let saddleY = y + 2;
+					let squareSize = 6;
 
-        
+					if (entry.saddlePad == 10) {
+						doc.setFillColor(...colorConfig.bg);
+						doc.rect(saddleX, saddleY, squareSize / 2, squareSize, "F");
+						doc.setFillColor(...colorConfig.half);
+						doc.rect(saddleX + squareSize / 2, saddleY, squareSize / 2, squareSize, "F");
+					} else {
+						doc.setFillColor(...colorConfig.bg);
+						doc.rect(saddleX, saddleY, squareSize, squareSize, "F");
+					}
+
+					doc.setTextColor(...colorConfig.text);
+					doc.setFontSize(8);
+					doc.text(`${entry.saddlePad}`, saddleX + 2.5, saddleY + 4.5, { align: "center" });
+				}
+
+				// ✅ **Black horizontal lines for clear separation**
+				doc.setDrawColor(0, 0, 0); // Black line
+				doc.line(14, y + rowHeight, 184, y + rowHeight);
+
+				// If the race number changes, add an extra space for clarity
+				if (previousRace !== null && previousRace !== entry.raceNumber) {
+					startY += 2;
+				}
+				previousRace = entry.raceNumber;
+			});
+
+			if (data.length === 0) {
+				doc.text("No valid race changes to display.", 14, startY + 10);
+			}
+
+			doc.save(`Race_Changes_${trackName}_${raceDate}.pdf`);
+		}
+
+
         function addRow(entry = {}) {
             const tableBody = document.getElementById("tableBody");
             
