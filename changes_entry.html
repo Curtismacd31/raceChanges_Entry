@@ -251,10 +251,12 @@ function downloadPDF() {
         let category = row.querySelector(".changeCategory").value || "N/A";
         let change = row.querySelector(".changeText").value || "N/A";
 
-        if (change === "N/A") return; // Skip empty changes
+        if (change === "N/A" && category === "N/A") return; // Skip empty changes
 
         saddlePad = saddlePad === "N/A" ? "" : saddlePad;
         horseName = horseName === "N/A" ? "" : horseName;
+		category = category === "N/A" ? "" : category;
+		change = change === "N/A" ? "" : change;
 
         data.push({
             raceNumber: parseInt(raceNumber),
@@ -348,7 +350,7 @@ function downloadPDF() {
 
             doc.setTextColor(...colorConfig.text);
             doc.setFontSize(8);
-            doc.text(`${entry.saddlePad}`, saddleX + 2.5, saddleY + 4.5, { align: "center" });
+            doc.text(`${entry.saddlePad}`, saddleX + 3, saddleY + 4, { align: "center" });
         }
 
         doc.setDrawColor(0, 0, 0);
