@@ -525,12 +525,17 @@ let selectedEquipmentChanges = []; // Array to hold selected changes
 
 function openEquipmentPopup(changeTextField) {
     currentEquipmentField = changeTextField; // Store reference to Change Text field
-    selectedEquipmentChanges = []; // Reset selected changes
+
+    // ✅ Load existing changes from ChangeText field
+    let existingChanges = currentEquipmentField.value ? currentEquipmentField.value.split(", ") : [];
+    selectedEquipmentChanges = [...existingChanges]; // Copy existing changes
 
     fetch("/json/equipment.json")
         .then(response => response.ok ? response.json() : [])
         .then(equipmentList => {
             let dropdown = document.getElementById("equipmentList");
+            let newEquipmentField = document.getElementById("newEquipment");
+
             dropdown.innerHTML = ""; // Clear previous options
 
             // Populate dropdown with equipment options
@@ -541,8 +546,20 @@ function openEquipmentPopup(changeTextField) {
                 dropdown.appendChild(option);
             });
 
+            // ✅ Pre-fill the text field if "HOPPLE LENGTH" is selected
+            dropdown.addEventListener("change", function() {
+                if (this.value.toUpperCase() === "HOPPLE LENGTH") {
+                    newEquipmentField.value = "HOPPLE LENGTH "; // Pre-fill for user input
+                } else {
+                    newEquipmentField.value = this.value; // Copy selection to text field
+                }
+            });
+
+            // ✅ Populate preview with existing changes
+            document.getElementById("equipmentPreview").value = selectedEquipmentChanges.join(", ");
+
             // Enable search filtering
-            document.getElementById("newEquipment").addEventListener("keyup", function() {
+            newEquipmentField.addEventListener("keyup", function() {
                 filterEquipment(this.value, equipmentList);
             });
 
@@ -584,16 +601,21 @@ function filterEquipment(searchTerm, equipmentList) {
 }
 
 function addEquipmentChange() {
+    let newEquipmentField = document.getElementById("newEquipment");
     let selectedEquipment = document.getElementById("equipmentList").value;
-    let newEquipment = document.getElementById("newEquipment").value.trim();
+    let newEquipment = newEquipmentField.value.trim();
 
     let finalEquipment = newEquipment !== "" ? newEquipment : selectedEquipment;
 
+    // ✅ Prevent duplicate entries
     if (finalEquipment !== "" && !selectedEquipmentChanges.includes(finalEquipment)) {
-        selectedEquipmentChanges.push(finalEquipment); // Add to the list
+        selectedEquipmentChanges.push(finalEquipment); // Add to list
 
-        // Update preview field
+        // ✅ Update preview field with all changes
         document.getElementById("equipmentPreview").value = selectedEquipmentChanges.join(", ");
+
+        // ✅ Clear input field for next entry
+        newEquipmentField.value = "";
     }
 }
 
@@ -603,13 +625,23 @@ function saveEquipmentChanges() {
         currentEquipmentField.value = selectedEquipmentChanges.join(", "); // Update Change Text field
     }
 
-    let newEquipmentEntries = selectedEquipmentChanges.filter(item => !document.getElementById("equipmentList").innerHTML.includes(item));
+    let newEquipmentEntries = selectedEquipmentChanges.filter(item => {
+        // ✅ Do not store variations of "HOPPLE LENGTH"
+        if (item.toUpperCase().startsWith("HOPPLE LENGTH")) {
+            return false;
+        }
+        return !document.getElementById("equipmentList").innerHTML.includes(item);
+    });
 
     if (newEquipmentEntries.length > 0) {
         fetch("/json/equipment.json")
             .then(response => response.ok ? response.json() : [])
             .then(existingEquipment => {
-                let updatedEquipment = [...new Set([...existingEquipment, ...newEquipmentEntries])]; // Merge & remove duplicates
+                let updatedEquipment = [...new Set([...existingEquipment, ...newEquipmentEntries])]; // Remove duplicates
+                
+                // ✅ Sort alphabetically (case-insensitive)
+                updatedEquipment.sort((a, b) => a.localeCompare(b, "en", { sensitivity: "base" }));
+
                 return fetch("/save", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -621,6 +653,7 @@ function saveEquipmentChanges() {
 
     closeEquipmentPopup();
 }
+
 
 
 function closeEquipmentPopup() {
@@ -706,31 +739,31 @@ function filterDrivers(searchTerm, drivers) {
 
 
 function saveDriverSelection() {
-    let selectedDriver = document.getElementById("driverList").value; // Get selected driver
+    let selectedDriver = document.getElementById("driverList").value;
     let newDriver = document.getElementById("newDriver").value.trim();
 
-    let finalDriver = newDriver !== "" ? newDriver : selectedDriver; // Ensure correct value is used
+    let finalDriver = newDriver !== "" ? newDriver : selectedDriver;
 
     if (currentChangeTextField) {
-        currentChangeTextField.value = finalDriver; // Set the value in Change Text field
+        currentChangeTextField.value = finalDriver; // Update the Change Text field
     }
 
-    if (newDriver !== "" && !selectedDriver) {
-        // Save new driver to drivers.json if it's a new entry
-        fetch("/json/drivers.json")
-            .then(response => response.ok ? response.json() : [])
-            .then(drivers => {
-                if (!drivers.includes(finalDriver)) {
-                    drivers.push(finalDriver);
-                    return fetch("/save", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ fileName: "drivers.json", data: drivers })
-                    });
-                }
-            })
-            .catch(error => console.error("Error saving new driver:", error));
-    }
+    // ✅ Fetch existing drivers, add the new one (if not exists), then sort alphabetically
+    fetch("/json/drivers.json")
+        .then(response => response.ok ? response.json() : [])
+        .then(drivers => {
+            if (!drivers.includes(finalDriver)) {
+                drivers.push(finalDriver);
+                drivers.sort((a, b) => a.localeCompare(b, "en", { sensitivity: "base" })); // Case-insensitive sorting
+
+                return fetch("/save", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ fileName: "drivers.json", data: drivers })
+                });
+            }
+        })
+        .catch(error => console.error("Error saving new driver:", error));
 
     closePopup();
 }
