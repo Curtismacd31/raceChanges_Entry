@@ -237,168 +237,168 @@
 
 
 		
-function downloadPDF() {
-    if (!window.jspdf) {
-        alert("Error: jsPDF library is not loaded.");
-        return;
-    }
+		function downloadPDF() {
+			if (!window.jspdf) {
+				alert("Error: jsPDF library is not loaded.");
+				return;
+			}
 
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+			const { jsPDF } = window.jspdf;
+			const doc = new jsPDF();
 
-    let trackName = document.getElementById('trackName').value || "Unknown Track";
-    let raceDate = document.getElementById('raceDate').value || "No Date";
-	let trackCondition = document.getElementById('trackCondition').value || "N/A";
-    let weather = document.getElementById('weather').value || "N/A";
-    let variant = document.getElementById('variant').value || "N/A";
-	
-	 // ✅ Get Current Time (HH:MM AM/PM format)
-    let now = new Date();
-    let hours = now.getHours();
-    let minutes = now.getMinutes().toString().padStart(2, "0");
-    let ampm = hours >= 12 ? "PM" : "AM";
-    hours = hours % 12 || 12; // Convert to 12-hour format
-    let creationTime = `${hours}:${minutes} ${ampm}`;
+			let trackName = document.getElementById('trackName').value || "Unknown Track";
+			let raceDate = document.getElementById('raceDate').value || "No Date";
+			let trackCondition = document.getElementById('trackCondition').value || "N/A";
+			let weather = document.getElementById('weather').value || "N/A";
+			let variant = document.getElementById('variant').value || "N/A";
+			
+			 // ✅ Get Current Time (HH:MM AM/PM format)
+			let now = new Date();
+			let hours = now.getHours();
+			let minutes = now.getMinutes().toString().padStart(2, "0");
+			let ampm = hours >= 12 ? "PM" : "AM";
+			hours = hours % 12 || 12; // Convert to 12-hour format
+			let creationTime = `${hours}:${minutes} ${ampm}`;
 
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.text(`Race Changes - ${trackName}`, 14, 20);
-    doc.setFontSize(12);
-    doc.text(`Date: ${raceDate}`, 14, 30);
-	doc.text(`Creation Time: ${creationTime}`, 14, 36); // ✅ Added Creation Time
-	doc.text(`Track: ${trackCondition}`, 94, 36);
-    doc.text(`Weather: ${weather}`, 94, 30);
-    doc.text(`Variant: ${variant}`, 164, 36);
+			doc.setFont("helvetica", "bold");
+			doc.setFontSize(16);
+			doc.text(`Race Changes - ${trackName}`, 14, 20);
+			doc.setFontSize(12);
+			doc.text(`Date: ${raceDate}`, 14, 30);
+			doc.text(`Creation Time: ${creationTime}`, 14, 36); // ✅ Added Creation Time
+			doc.text(`Track: ${trackCondition}`, 94, 36);
+			doc.text(`Weather: ${weather}`, 94, 30);
+			doc.text(`Variant: ${variant}`, 164, 36);
 
-    let startY = 40; // Start position for the table
-    let columnWidths = [20, 20, 35, 40, 70]; // [Race #, Saddle Pad, Horse Name, Category, Change]
+			let startY = 40; // Start position for the table
+			let columnWidths = [20, 20, 35, 40, 70]; // [Race #, Saddle Pad, Horse Name, Category, Change]
 
-    let rows = document.querySelectorAll("tbody tr");
+			let rows = document.querySelectorAll("tbody tr");
 
-    // Extract and Sort Data
-    let data = [];
+			// Extract and Sort Data
+			let data = [];
 
-    rows.forEach((row) => {
-        let raceNumber = row.querySelector(".raceNumber").value || "N/A";
-        let saddlePad = row.querySelector(".saddlePad").value || "N/A";
-        let horseName = row.querySelector(".horseName").value || "N/A";
-        let category = row.querySelector(".changeCategory").value || "N/A";
-        let change = row.querySelector(".changeText").value || "N/A";
+			rows.forEach((row) => {
+				let raceNumber = row.querySelector(".raceNumber").value || "N/A";
+				let saddlePad = row.querySelector(".saddlePad").value || "N/A";
+				let horseName = row.querySelector(".horseName").value || "N/A";
+				let category = row.querySelector(".changeCategory").value || "N/A";
+				let change = row.querySelector(".changeText").value || "N/A";
 
-        if (change === "N/A" && category === "N/A") return; // Skip empty changes
+				if (change === "N/A" && category === "N/A") return; // Skip empty changes
 
-        saddlePad = saddlePad === "N/A" ? "" : saddlePad;
-        horseName = horseName === "N/A" ? "" : horseName;
-		category = category === "N/A" ? "" : category;
-		change = change === "N/A" ? "" : change;
+				saddlePad = saddlePad === "N/A" ? "" : saddlePad;
+				horseName = horseName === "N/A" ? "" : horseName;
+				category = category === "N/A" ? "" : category;
+				change = change === "N/A" ? "" : change;
 
-        data.push({
-            raceNumber: parseInt(raceNumber),
-            saddlePad: saddlePad === "" ? -1 : parseInt(saddlePad),
-            horseName,
-            category,
-            change
-        });
-    });
+				data.push({
+					raceNumber: "RACE " + parseInt(raceNumber),
+					saddlePad: saddlePad === "" ? -1 : parseInt(saddlePad),
+					horseName,
+					category,
+					change
+				});
+			});
 
-    // ✅ Sorting logic
-    data.sort((a, b) => {
-        if (a.raceNumber !== b.raceNumber) return a.raceNumber - b.raceNumber;
-        return a.saddlePad - b.saddlePad;
-    });
+			// ✅ Sorting logic
+			data.sort((a, b) => {
+				if (a.raceNumber !== b.raceNumber) return a.raceNumber - b.raceNumber;
+				return a.saddlePad - b.saddlePad;
+			});
 
-    // Table Headers
-    doc.setFontSize(10);
-    doc.setTextColor(255, 255, 255);
-    doc.setFillColor(50, 50, 50);
-    doc.rect(14, startY, columnWidths[0], 10, "F");
-    doc.rect(34, startY, columnWidths[1], 10, "F");
-    doc.rect(54, startY, columnWidths[2], 10, "F");
-    doc.rect(89, startY, columnWidths[3], 10, "F");
-    doc.rect(129, startY, columnWidths[4], 10, "F");
+			// Table Headers
+			doc.setFontSize(10);
+			doc.setTextColor(255, 255, 255);
+			doc.setFillColor(50, 50, 50);
+			doc.rect(14, startY, columnWidths[0], 10, "F");
+			doc.rect(34, startY, columnWidths[1], 10, "F");
+			doc.rect(54, startY, columnWidths[2], 10, "F");
+			doc.rect(89, startY, columnWidths[3], 10, "F");
+			doc.rect(129, startY, columnWidths[4], 10, "F");
 
-    doc.text("Race #", 18, startY + 7);
-    doc.text("Saddle", 38, startY + 7);
-    doc.text("Horse Name", 58, startY + 7);
-    doc.text("Category", 94, startY + 7);
-    doc.text("Change", 134, startY + 7);
+			doc.text("Race #", 18, startY + 7);
+			doc.text("Saddle", 38, startY + 7);
+			doc.text("Horse Name", 58, startY + 7);
+			doc.text("Category", 94, startY + 7);
+			doc.text("Change", 134, startY + 7);
 
-    startY += 10;
+			startY += 10;
 
-    data.forEach((entry, index) => {
-        let textWidth = columnWidths[4] - 5;
-        let wrappedText = doc.splitTextToSize(entry.change, textWidth);
-        let rowHeight = Math.max(10, wrappedText.length * 5); // Expands row height dynamically
+			data.forEach((entry, index) => {
+				let textWidth = columnWidths[4] - 5;
+				let wrappedText = doc.splitTextToSize(entry.change, textWidth);
+				let rowHeight = Math.max(10, wrappedText.length * 5); // Expands row height dynamically
 
-        if (index % 2 === 0) {
-            doc.setFillColor(240, 240, 240);
-        } else {
-            doc.setFillColor(255, 255, 255);
-        }
+				if (index % 2 === 0) {
+					doc.setFillColor(240, 240, 240);
+				} else {
+					doc.setFillColor(255, 255, 255);
+				}
 
-        doc.rect(14, startY, columnWidths[0] + columnWidths[1] + columnWidths[2] + columnWidths[3] + columnWidths[4], rowHeight, "F");
+				doc.rect(14, startY, columnWidths[0] + columnWidths[1] + columnWidths[2] + columnWidths[3] + columnWidths[4], rowHeight, "F");
 
-        doc.setFontSize(8);
-        doc.setTextColor(0, 0, 0);
+				doc.setFontSize(8);
+				doc.setTextColor(0, 0, 0);
 
-        let centerY = startY + rowHeight / 2 + 2; // ✅ Center text vertically
+				let centerY = startY + rowHeight / 2 + 2; // ✅ Center text vertically
 
-        doc.text(`${entry.raceNumber}`, 18, centerY);
-        doc.text(`${entry.horseName}`, 58, centerY);
-        doc.text(`${entry.category}`, 94, centerY);
-        doc.text(wrappedText, 134, startY + 5); // ✅ Proper alignment for multi-line text
+				doc.text(`${entry.raceNumber}`, 18, centerY);
+				doc.text(`${entry.horseName}`, 58, centerY);
+				doc.text(`${entry.category}`, 94, centerY);
+				doc.text(wrappedText, 134, startY + 5); // ✅ Proper alignment for multi-line text
 
-        // ✅ **Add Saddle Pad Color Box**
-        if (entry.saddlePad !== -1) {
-            let saddleX = 37;
-            let saddleY = startY + (rowHeight / 2) - 3; // ✅ Centered vertically
-            let squareSize = 6;
+				// ✅ **Add Saddle Pad Color Box**
+				if (entry.saddlePad !== -1) {
+					let saddleX = 37;
+					let saddleY = startY + (rowHeight / 2) - 3; // ✅ Centered vertically
+					let squareSize = 6;
 
-            let colors = {
-                1: { bg: [255, 0, 0], text: [255, 255, 255] }, // Red
-                2: { bg: [0, 0, 255], text: [255, 255, 255] }, // Blue
-                3: { bg: [255, 255, 255], text: [0, 0, 0] }, // White
-                4: { bg: [0, 128, 0], text: [255, 255, 255] }, // Green
-                5: { bg: [0, 0, 0], text: [255, 255, 255] }, // Black
-                6: { bg: [255, 255, 0], text: [0, 0, 0] }, // Yellow
-                7: { bg: [255, 105, 180], text: [255, 255, 255] }, // Pink
-                8: { bg: [128, 128, 128], text: [255, 255, 255] }, // Grey
-                9: { bg: [128, 0, 128], text: [255, 255, 255] }, // Purple
-                10: { bg: [255, 0, 0], text: [255, 255, 255], half: [0, 0, 255] }, // Half Red/Half Blue
-                11: { bg: [173, 216, 230], text: [0, 0, 0] }, // Light Blue
-                12: { bg: [139, 69, 19], text: [255, 255, 255] }, // Brown
-            };
+					let colors = {
+						1: { bg: [255, 0, 0], text: [255, 255, 255] }, // Red
+						2: { bg: [0, 0, 255], text: [255, 255, 255] }, // Blue
+						3: { bg: [255, 255, 255], text: [0, 0, 0] }, // White
+						4: { bg: [0, 128, 0], text: [255, 255, 255] }, // Green
+						5: { bg: [0, 0, 0], text: [255, 255, 255] }, // Black
+						6: { bg: [255, 255, 0], text: [0, 0, 0] }, // Yellow
+						7: { bg: [255, 105, 180], text: [255, 255, 255] }, // Pink
+						8: { bg: [128, 128, 128], text: [255, 255, 255] }, // Grey
+						9: { bg: [128, 0, 128], text: [255, 255, 255] }, // Purple
+						10: { bg: [255, 0, 0], text: [255, 255, 255], half: [0, 0, 255] }, // Half Red/Half Blue
+						11: { bg: [173, 216, 230], text: [0, 0, 0] }, // Light Blue
+						12: { bg: [139, 69, 19], text: [255, 255, 255] }, // Brown
+					};
 
-            let defaultColor = { bg: [50, 205, 50], text: [0, 0, 0] }; // Lime Green for others
-            let colorConfig = colors[entry.saddlePad] || defaultColor;
+					let defaultColor = { bg: [50, 205, 50], text: [0, 0, 0] }; // Lime Green for others
+					let colorConfig = colors[entry.saddlePad] || defaultColor;
 
-            if (entry.saddlePad == 10) {
-                doc.setFillColor(...colorConfig.bg);
-                doc.rect(saddleX, saddleY, squareSize / 2, squareSize, "F");
-                doc.setFillColor(...colorConfig.half);
-                doc.rect(saddleX + squareSize / 2, saddleY, squareSize / 2, squareSize, "F");
-            } else {
-                doc.setFillColor(...colorConfig.bg);
-                doc.rect(saddleX, saddleY, squareSize, squareSize, "F");
-            }
+					if (entry.saddlePad == 10) {
+						doc.setFillColor(...colorConfig.bg);
+						doc.rect(saddleX, saddleY, squareSize / 2, squareSize, "F");
+						doc.setFillColor(...colorConfig.half);
+						doc.rect(saddleX + squareSize / 2, saddleY, squareSize / 2, squareSize, "F");
+					} else {
+						doc.setFillColor(...colorConfig.bg);
+						doc.rect(saddleX, saddleY, squareSize, squareSize, "F");
+					}
 
-            doc.setTextColor(...colorConfig.text);
-            doc.setFontSize(8);
-            doc.text(`${entry.saddlePad}`, saddleX + 3, saddleY + 4, { align: "center" });
-        }
+					doc.setTextColor(...colorConfig.text);
+					doc.setFontSize(8);
+					doc.text(`${entry.saddlePad}`, saddleX + 3, saddleY + 4, { align: "center" });
+				}
 
-        doc.setDrawColor(0, 0, 0);
-        doc.line(14, startY + rowHeight, 184, startY + rowHeight);
+				doc.setDrawColor(0, 0, 0);
+				doc.line(14, startY + rowHeight, 184, startY + rowHeight);
 
-        startY += rowHeight;
-    });
+				startY += rowHeight;
+			});
 
-    if (data.length === 0) {
-        doc.text("No valid race changes to display.", 14, startY + 10);
-    }
+			if (data.length === 0) {
+				doc.text("No valid race changes to display.", 14, startY + 10);
+			}
 
-    doc.save(`Race_Changes_${trackName}_${raceDate}.pdf`);
-}
+			doc.save(`Race_Changes_${trackName}_${raceDate}.pdf`);
+		}
 
 
 
