@@ -106,6 +106,20 @@
         .hidden {
             display: none;
         }
+		.popup {
+			position: fixed;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			background: white;
+			padding: 20px;
+			border-radius: 10px;
+			box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+			z-index: 1000;
+		}
+		.hidden {
+			display: none;
+		}
     </style>
     <script>
         const judgesMapping = {
@@ -467,16 +481,32 @@
     if (entry.category) {
         categorySelect.value = entry.category;
     }
+	
+	categorySelect.addEventListener("change", function() {
+		if (this.value === "Driver Change") {
+			openDriverPopup(changeInput);
+		} else if (this.value === "Equipment Change") {
+			openEquipmentPopup(changeInput);
+		}
+	});
+
     categoryCell.appendChild(categorySelect);
     row.appendChild(categoryCell);
 
-    // Change Text Area
+    // ✅ Change Text Area
     let changeCell = document.createElement("td");
     let changeInput = document.createElement("textarea");
     changeInput.className = "changeText";
     changeInput.value = entry.change || "";
     changeCell.appendChild(changeInput);
     row.appendChild(changeCell);
+
+    // ✅ Open popup when "Driver Change" is selected
+    categorySelect.addEventListener("change", function() {
+        if (this.value === "Driver Change") {
+            openDriverPopup(changeInput); // Pass Change Text field to be updated
+        }
+    });
     
     // Delete Button
     let deleteCell = document.createElement("td");
@@ -490,15 +520,227 @@
     tableBody.appendChild(row);
 }
 
-document.addEventListener("DOMContentLoaded", function() {
-    addRow();
-});
+let currentEquipmentField; // Store the text field being updated
+let selectedEquipmentChanges = []; // Array to hold selected changes
+
+function openEquipmentPopup(changeTextField) {
+    currentEquipmentField = changeTextField; // Store reference to Change Text field
+    selectedEquipmentChanges = []; // Reset selected changes
+
+    fetch("/json/equipment.json")
+        .then(response => response.ok ? response.json() : [])
+        .then(equipmentList => {
+            let dropdown = document.getElementById("equipmentList");
+            dropdown.innerHTML = ""; // Clear previous options
+
+            // Populate dropdown with equipment options
+            equipmentList.forEach(item => {
+                let option = document.createElement("option");
+                option.value = item;
+                option.textContent = item;
+                dropdown.appendChild(option);
+            });
+
+            // Enable search filtering
+            document.getElementById("newEquipment").addEventListener("keyup", function() {
+                filterEquipment(this.value, equipmentList);
+            });
+
+        })
+        .catch(error => console.error("Error loading equipment:", error));
+
+    document.getElementById("equipmentPopup").classList.remove("hidden");
+}
+
+
+function filterEquipment(searchTerm, equipmentList) {
+    let dropdown = document.getElementById("equipmentList");
+    dropdown.innerHTML = ""; // Clear previous list
+
+    searchTerm = searchTerm.toLowerCase(); // Convert input to lowercase
+
+    let filteredItems = equipmentList.filter(item => item.toLowerCase().includes(searchTerm));
+
+    filteredItems.forEach(item => {
+        let option = document.createElement("option");
+        option.value = item;
+        option.textContent = item;
+        dropdown.appendChild(option);
+    });
+
+    // If no match, allow new entry
+    if (filteredItems.length === 0) {
+        let option = document.createElement("option");
+        option.value = searchTerm;
+        option.textContent = `New: ${searchTerm}`;
+        option.selected = true;
+        dropdown.appendChild(option);
+    }
+
+    // ✅ Update input field when an item is clicked
+    dropdown.addEventListener("change", function() {
+        document.getElementById("newEquipment").value = this.value;
+    });
+}
+
+function addEquipmentChange() {
+    let selectedEquipment = document.getElementById("equipmentList").value;
+    let newEquipment = document.getElementById("newEquipment").value.trim();
+
+    let finalEquipment = newEquipment !== "" ? newEquipment : selectedEquipment;
+
+    if (finalEquipment !== "" && !selectedEquipmentChanges.includes(finalEquipment)) {
+        selectedEquipmentChanges.push(finalEquipment); // Add to the list
+
+        // Update preview field
+        document.getElementById("equipmentPreview").value = selectedEquipmentChanges.join(", ");
+    }
+}
+
+
+function saveEquipmentChanges() {
+    if (currentEquipmentField) {
+        currentEquipmentField.value = selectedEquipmentChanges.join(", "); // Update Change Text field
+    }
+
+    let newEquipmentEntries = selectedEquipmentChanges.filter(item => !document.getElementById("equipmentList").innerHTML.includes(item));
+
+    if (newEquipmentEntries.length > 0) {
+        fetch("/json/equipment.json")
+            .then(response => response.ok ? response.json() : [])
+            .then(existingEquipment => {
+                let updatedEquipment = [...new Set([...existingEquipment, ...newEquipmentEntries])]; // Merge & remove duplicates
+                return fetch("/save", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ fileName: "equipment.json", data: updatedEquipment })
+                });
+            })
+            .catch(error => console.error("Error saving new equipment:", error));
+    }
+
+    closeEquipmentPopup();
+}
+
+
+function closeEquipmentPopup() {
+    document.getElementById("equipmentPopup").classList.add("hidden");
+    document.getElementById("newEquipment").value = ""; // Reset input
+    document.getElementById("equipmentPreview").value = ""; // Reset preview
+}
+
+function removeLastEquipmentChange() {
+    if (selectedEquipmentChanges.length > 0) {
+        selectedEquipmentChanges.pop(); // Remove the last item
+        document.getElementById("equipmentPreview").value = selectedEquipmentChanges.join(", "); // Update preview
+    } else {
+        alert("No changes to remove.");
+    }
+}
 
 function checkEnter(event) {
     if (event.key === "Enter") {
         validateLogin();
     }
 }
+
+let currentChangeTextField; // Store the current text field for update
+
+function openDriverPopup(changeTextField) {
+    currentChangeTextField = changeTextField; // Store the field reference
+
+    fetch("/json/drivers.json")
+        .then(response => response.ok ? response.json() : [])
+        .then(drivers => {
+            let driverList = document.getElementById("driverList");
+            driverList.innerHTML = ""; // Clear previous list
+
+            // Populate dropdown with all driver names
+            drivers.forEach(driver => {
+                let option = document.createElement("option");
+                option.value = driver;
+                option.textContent = driver;
+                driverList.appendChild(option);
+            });
+
+            // Enable search filtering
+            document.getElementById("newDriver").addEventListener("keyup", function() {
+                filterDrivers(this.value, drivers);
+            });
+
+        })
+        .catch(error => console.error("Error loading drivers:", error));
+
+    document.getElementById("driverPopup").classList.remove("hidden");
+}
+
+function filterDrivers(searchTerm, drivers) {
+    let driverList = document.getElementById("driverList");
+    driverList.innerHTML = ""; // Clear previous list
+
+    searchTerm = searchTerm.toLowerCase(); // Convert input to lowercase
+
+    let filteredDrivers = drivers.filter(driver => driver.toLowerCase().startsWith(searchTerm));
+
+    filteredDrivers.forEach(driver => {
+        let option = document.createElement("option");
+        option.value = driver;
+        option.textContent = driver;
+        driverList.appendChild(option);
+    });
+
+    // If no match, allow new entry
+    if (filteredDrivers.length === 0) {
+        let option = document.createElement("option");
+        option.value = searchTerm;
+        option.textContent = `New: ${searchTerm}`;
+        option.selected = true;
+        driverList.appendChild(option);
+    }
+
+    // ✅ Add event listener to update input field when a name is clicked
+    driverList.addEventListener("change", function() {
+        document.getElementById("newDriver").value = this.value; // Set the input field to the selected value
+    });
+}
+
+
+function saveDriverSelection() {
+    let selectedDriver = document.getElementById("driverList").value; // Get selected driver
+    let newDriver = document.getElementById("newDriver").value.trim();
+
+    let finalDriver = newDriver !== "" ? newDriver : selectedDriver; // Ensure correct value is used
+
+    if (currentChangeTextField) {
+        currentChangeTextField.value = finalDriver; // Set the value in Change Text field
+    }
+
+    if (newDriver !== "" && !selectedDriver) {
+        // Save new driver to drivers.json if it's a new entry
+        fetch("/json/drivers.json")
+            .then(response => response.ok ? response.json() : [])
+            .then(drivers => {
+                if (!drivers.includes(finalDriver)) {
+                    drivers.push(finalDriver);
+                    return fetch("/save", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ fileName: "drivers.json", data: drivers })
+                    });
+                }
+            })
+            .catch(error => console.error("Error saving new driver:", error));
+    }
+
+    closePopup();
+}
+
+
+function closePopup() {
+    document.getElementById("driverPopup").classList.add("hidden");
+    document.getElementById("newDriver").value = ""; // Reset input field
+}
+
 
     </script>
 </head>
@@ -529,5 +771,38 @@ function checkEnter(event) {
             <tbody id="tableBody"></tbody>
         </table>
     </div>
+	
+	<!-- Driver Selection Popup -->
+	<div id="driverPopup" class="popup hidden">
+		<h3>Select a Driver</h3>
+		<select id="driverList"></select>
+		<input type="text" id="newDriver" placeholder="Enter new driver if not listed">
+		<button onclick="saveDriverSelection()">Save</button>
+		<button onclick="closePopup()">Cancel</button>
+	</div>
+	
+	<!-- Equipment Change Popup -->
+	<div id="equipmentPopup" class="popup hidden">
+		<h3>Select Equipment Change(s)</h3>
+
+		<!-- Equipment dropdown -->
+		<select id="equipmentList"></select>
+
+		<!-- Input field for new equipment changes -->
+		<input type="text" id="newEquipment" placeholder="Enter new equipment change">
+
+		<!-- Button to add the selected change -->
+		<button onclick="addEquipmentChange()">Add Equipment Change</button>
+		<button onclick="removeLastEquipmentChange()">Remove Last Change</button>
+
+		<!-- Text area to show selected changes -->
+		<textarea id="equipmentPreview" readonly></textarea>
+
+		<!-- Save & Cancel Buttons -->
+		<button onclick="saveEquipmentChanges()">Save</button>
+		<button onclick="closeEquipmentPopup()">Cancel</button>
+	</div>
+
+	
 </body>
 </html>
