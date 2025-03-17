@@ -134,15 +134,31 @@
         };
         
         function validateLogin() {
-            const password = document.getElementById("passwordInput").value;
-            if (judgesMapping[password]) {
-                document.getElementById("trackName").innerHTML = `<option value="${judgesMapping[password]}">${judgesMapping[password]}</option>`;
-                document.getElementById("loginPage").classList.add("hidden");
-                document.getElementById("raceChangesPage").classList.remove("hidden");
-            } else {
-                alert("Invalid Judges Number");
-            }
-        }
+				const password = document.getElementById("passwordInput").value;
+				const trackDropdown = document.getElementById("trackName");
+
+				if (judgesMapping[password]) {
+					trackDropdown.innerHTML = ""; // Clear previous options
+
+					if (password === "Judges1") {
+						// ✅ If Judges1 logs in, show two options
+						trackDropdown.innerHTML = `
+							<option value="Charlottetown - Afternoon">Charlottetown - Afternoon</option>
+							<option value="Charlottetown - Evening">Charlottetown - Evening</option>
+						`;
+					} else {
+						// ✅ Default behavior for all other judges
+						trackDropdown.innerHTML = `<option value="${judgesMapping[password]}">${judgesMapping[password]}</option>`;
+					}
+
+					// Hide login, show race changes page
+					document.getElementById("loginPage").classList.add("hidden");
+					document.getElementById("raceChangesPage").classList.remove("hidden");
+				} else {
+					alert("Invalid Judges Number");
+				}
+			}
+
 
         function checkForExistingData() {
             const trackName = document.getElementById('trackName').value;
