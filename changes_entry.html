@@ -147,13 +147,25 @@
         }
 
         function loadExistingData(data) {
-            const tableBody = document.getElementById("tableBody");
-            tableBody.innerHTML = "";
-            data.forEach(entry => {
-                addRow(entry);
-            });
-            addRow();
-        }
+			const tableBody = document.getElementById("tableBody");
+			tableBody.innerHTML = "";
+
+			// Extract the races from the JSON
+			const racesData = data[0]?.races || [];
+
+			// Populate the text fields for Track, Weather, and Variant
+			document.getElementById("trackCondition").value = data[0]?.Track || "";
+			document.getElementById("weather").value = data[0]?.Weather || "";
+			document.getElementById("variant").value = data[0]?.Variant || "";
+
+			// Populate the table with race data
+			racesData.forEach(entry => {
+				addRow(entry);
+			});
+
+			addRow(); // Add an empty row for new input
+		}
+
 		function saveData() {
 			const trackName = document.getElementById('trackName').value;
 			const raceDate = document.getElementById('raceDate').value;
