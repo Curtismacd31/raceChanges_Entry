@@ -116,7 +116,7 @@
             "Judges5": "Truro",
             "Judges6": "Woodstock",
             "Judges7": "TheLoop",
-	    "Grvr1": "Grand River"
+			"Grvr1": "Grand River"
         };
         
         function validateLogin() {
@@ -155,67 +155,70 @@
             addRow();
         }
 		function saveData() {
-    const trackName = document.getElementById('trackName').value;
-    const raceDate = document.getElementById('raceDate').value;
-    if (!trackName || !raceDate) {
-        alert("Please select Track Name and Date.");
-        return;
-    }
+			const trackName = document.getElementById('trackName').value;
+			const raceDate = document.getElementById('raceDate').value;
+			const trackCondition = document.getElementById('trackCondition').value || "";
+			const weather = document.getElementById('weather').value || "";
+			const variant = document.getElementById('variant').value || "";
+			if (!trackName || !raceDate) {
+				alert("Please select Track Name and Date.");
+				return;
+			}
 
-    let data = [];
-    const rows = document.querySelectorAll("tbody tr");
+			let data = [];
+			const rows = document.querySelectorAll("tbody tr");
 
-    rows.forEach(row => {
-        const raceNumber = row.querySelector(".raceNumber").value;
-        let saddlePad = row.querySelector(".saddlePad").value;
-        let horseName = row.querySelector(".horseName").value;
-        const category = row.querySelector(".changeCategory").value;
-        const changeText = row.querySelector(".changeText").value;
+			rows.forEach(row => {
+				const raceNumber = row.querySelector(".raceNumber").value;
+				let saddlePad = row.querySelector(".saddlePad").value;
+				let horseName = row.querySelector(".horseName").value;
+				const category = row.querySelector(".changeCategory").value;
+				const changeText = row.querySelector(".changeText").value;
 
-        // ✅ Only save if Race Number and Change are entered
-        if (!raceNumber || !changeText) return;
+				// ✅ Only save if Race Number and Change are entered
+				if (!raceNumber || !changeText) return;
 
-        // ✅ Replace "N/A" or empty values with proper formatting
-        saddlePad = saddlePad === "N/A" || saddlePad === "" ? "" : saddlePad;
-        horseName = horseName === "N/A" || horseName === "" ? "" : horseName;
+				// ✅ Replace "N/A" or empty values with proper formatting
+				saddlePad = saddlePad === "N/A" || saddlePad === "" ? "" : saddlePad;
+				horseName = horseName === "N/A" || horseName === "" ? "" : horseName;
 
-        data.push({
-            raceNumber: parseInt(raceNumber),
-            saddlePad: saddlePad === "" ? -1 : parseInt(saddlePad), // Sort blank saddle pads first
-            horseName,
-            category,
-            change: changeText
-        });
-    });
+				data.push({
+					raceNumber: parseInt(raceNumber),
+					saddlePad: saddlePad === "" ? -1 : parseInt(saddlePad), // Sort blank saddle pads first
+					horseName,
+					category,
+					change: changeText
+				});
+			});
 
-    // ✅ Sort by Race Number, then place blank saddle pads first
-    data.sort((a, b) => {
-        if (a.raceNumber !== b.raceNumber) {
-            return a.raceNumber - b.raceNumber;
-        }
-        return a.saddlePad - b.saddlePad; // Places blank (-1) saddle pads first
-    });
+			// ✅ Sort by Race Number, then place blank saddle pads first
+			data.sort((a, b) => {
+				if (a.raceNumber !== b.raceNumber) {
+					return a.raceNumber - b.raceNumber;
+				}
+				return a.saddlePad - b.saddlePad; // Places blank (-1) saddle pads first
+			});
 
-    // ✅ Convert saddle pads back to strings (blanks stay blank)
-    data = data.map(entry => ({
-        raceNumber: entry.raceNumber.toString(),
-        saddlePad: entry.saddlePad === -1 ? "" : entry.saddlePad.toString(),
-        horseName: entry.horseName,
-        category: entry.category,
-        change: entry.change
-    }));
+			// ✅ Convert saddle pads back to strings (blanks stay blank)
+			data = data.map(entry => ({
+				raceNumber: entry.raceNumber.toString(),
+				saddlePad: entry.saddlePad === -1 ? "" : entry.saddlePad.toString(),
+				horseName: entry.horseName,
+				category: entry.category,
+				change: entry.change
+			}));
 
-    const fileName = `${trackName}_${raceDate}_changes.json`;
+			const fileName = `${trackName}_${raceDate}_changes.json`;
 
-    fetch('/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileName, data })
-    })
-    .then(response => response.text())
-    .then(result => alert(result))
-    .catch(error => console.error('Error:', error));
-}
+			fetch('/save', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ fileName, data })
+			})
+			.then(response => response.text())
+			.then(result => alert(result))
+			.catch(error => console.error('Error:', error));
+		}
 
 
 		
@@ -230,6 +233,9 @@ function downloadPDF() {
 
     let trackName = document.getElementById('trackName').value || "Unknown Track";
     let raceDate = document.getElementById('raceDate').value || "No Date";
+	let trackCondition = document.getElementById('trackCondition').value || "N/A";
+    let weather = document.getElementById('weather').value || "N/A";
+    let variant = document.getElementById('variant').value || "N/A";
 	
 	 // ✅ Get Current Time (HH:MM AM/PM format)
     let now = new Date();
@@ -245,6 +251,9 @@ function downloadPDF() {
     doc.setFontSize(12);
     doc.text(`Date: ${raceDate}`, 14, 30);
 	doc.text(`Creation Time: ${creationTime}`, 14, 36); // ✅ Added Creation Time
+	doc.text(`Track: ${trackCondition}`, 94, 36);
+    doc.text(`Weather: ${weather}`, 94, 30);
+    doc.text(`Variant: ${variant}`, 164, 36);
 
     let startY = 40; // Start position for the table
     let columnWidths = [20, 20, 35, 40, 70]; // [Race #, Saddle Pad, Horse Name, Category, Change]
@@ -469,6 +478,7 @@ function downloadPDF() {
 document.addEventListener("DOMContentLoaded", function() {
     addRow();
 });
+
 function checkEnter(event) {
     if (event.key === "Enter") {
         validateLogin();
@@ -490,8 +500,14 @@ function checkEnter(event) {
         <select id="trackName" onchange="checkForExistingData()"></select>
         <label for="raceDate">Date:</label>
         <input type="date" id="raceDate" onchange="checkForExistingData()">
+		<label for="trackCondition">TRACK:</label>
+		<input type="text" id="trackCondition" placeholder="Enter Track Condition">
+		<label for="weather">WEATHER:</label>
+		<input type="text" id="weather" placeholder="Enter Weather Condition">
+		<label for="variant">VARIANT:</label>
+		<input type="text" id="variant" placeholder="Enter Variant">
         <button onclick="addRow()">Add Row</button>
-        <button onclick="saveData()">Save</button>
+		<button onclick="saveData()">Save</button>
 		<button class="downloadBtn" onclick="downloadPDF()">Download PDF</button>
         <table>
             <thead><tr><th>Race Number</th><th>Saddle Pad</th><th>Horse Name</th><th>Category</th><th>Change</th><th>Action</th></tr></thead>
