@@ -166,8 +166,9 @@
 			}
 
 			let data = [];
+			let races = [];
 			const rows = document.querySelectorAll("tbody tr");
-
+			
 			rows.forEach(row => {
 				const raceNumber = row.querySelector(".raceNumber").value;
 				let saddlePad = row.querySelector(".saddlePad").value;
@@ -182,7 +183,7 @@
 				saddlePad = saddlePad === "N/A" || saddlePad === "" ? "" : saddlePad;
 				horseName = horseName === "N/A" || horseName === "" ? "" : horseName;
 
-				data.push({
+				races.push({
 					raceNumber: parseInt(raceNumber),
 					saddlePad: saddlePad === "" ? -1 : parseInt(saddlePad), // Sort blank saddle pads first
 					horseName,
@@ -192,7 +193,7 @@
 			});
 
 			// ✅ Sort by Race Number, then place blank saddle pads first
-			data.sort((a, b) => {
+			races.sort((a, b) => {
 				if (a.raceNumber !== b.raceNumber) {
 					return a.raceNumber - b.raceNumber;
 				}
@@ -200,13 +201,15 @@
 			});
 
 			// ✅ Convert saddle pads back to strings (blanks stay blank)
-			data = data.map(entry => ({
+			races = races.map(entry => ({
 				raceNumber: entry.raceNumber.toString(),
 				saddlePad: entry.saddlePad === -1 ? "" : entry.saddlePad.toString(),
 				horseName: entry.horseName,
 				category: entry.category,
 				change: entry.change
 			}));
+			
+			data.push({TrackName: trackName, Date: raceDate, Track: trackCondition, Weather: weather, Variant: variant, races});
 
 			const fileName = `${trackName}_${raceDate}_changes.json`;
 
