@@ -469,15 +469,20 @@ function downloadPDF() {
 document.addEventListener("DOMContentLoaded", function() {
     addRow();
 });
+function checkEnter(event) {
+    if (event.key === "Enter") {
+        validateLogin();
+    }
+}
 
     </script>
 </head>
 <body>
     <div class="login-container" id="loginPage">
-        <h2>Enter Track Password</h2>
-        <input type="password" id="passwordInput" placeholder="Enter Judges Number">
-        <button onclick="validateLogin()">Login</button>
-    </div>
+		<h2>Enter Track Password</h2>
+		<input type="password" id="passwordInput" placeholder="Enter Judges Number" onkeydown="checkEnter(event)">
+		<button onclick="validateLogin()">Login</button>
+	</div>
     
     <div class="container hidden" id="raceChangesPage">
         <h2>Race Changes</h2>
