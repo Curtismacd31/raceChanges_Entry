@@ -3,6 +3,16 @@ const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
 
+const TEMP_DIR = path.join(__dirname, "temp_entries");
+
+console.log(`Checking TEMP_DIR existence: ${fs.existsSync(TEMP_DIR)}`);
+console.log(`TEMP_DIR Path: ${TEMP_DIR}`);
+
+if (!fs.existsSync(TEMP_DIR)) {
+    fs.mkdirSync(TEMP_DIR, { recursive: true });
+    console.log("✅ Temp directory created on startup.");
+}
+
 const app = express();
 app.use(express.json());
 app.use(cors());
