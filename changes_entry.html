@@ -122,6 +122,11 @@
 		}
     </style>
     <script>
+	
+		let currentEquipmentField = null; // Store reference to Change Text field
+		let selectedEquipmentChanges = []; // Array to hold selected changes
+		let currentChangeTextField = null;  // Store reference to change text field
+		
         const judgesMapping = {
             "Judges1": "Charlottetown",
             "Judges2": "Summerside",
@@ -159,99 +164,157 @@
 				}
 			}
 
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//CHECK FOR EXISTING FILE
+		function checkForExistingData() {
+			const trackName = document.getElementById("trackName").value;
+			const raceDate = document.getElementById("raceDate").value;
+			if (!trackName || !raceDate) return;
 
-        function checkForExistingData() {
-            const trackName = document.getElementById('trackName').value;
-            const raceDate = document.getElementById('raceDate').value;
-            if (!trackName || !raceDate) return;
+			const changesFile = `${trackName}_${raceDate}_changes.json`;
+			const entriesFile = `${trackName}_${raceDate}_entries.json`;
 
-            const fileName = `${trackName}_${raceDate}_changes.json`;
-            fetch(`/json/${fileName}`)
-                .then(response => response.ok ? response.json() : Promise.reject('File not found'))
-                .then(data => {
-                    if (confirm("A saved file exists for this track and date. Do you want to reload it?")) {
-                        loadExistingData(data);
-                    }
-                })
-                .catch(error => console.log("No existing file found."));
-        }
+			console.log("📌 Checking for existing files:", changesFile, entriesFile);
+			
+			
+			// ✅ Load Entries File
+			fetch(`/temp_entries/${entriesFile}`)
+				.then(response => response.ok ? response.json() : Promise.reject("Entries file not found"))
+				.then(entries => {
+					console.log("📌 Received Race Entries:", entries);
+					if (entries.horseEntries) {
+						window.horseEntries = entries.horseEntries; // ✅ Store entries globally
+						console.log("✅ Race entries loaded into memory:", window.horseEntries);
+						updateAllDropdowns(); // ✅ Refresh UI dropdowns
+					}
+				})
+				.catch(error => console.log("❌ No entries file found:", error));
 
-        function loadExistingData(data) {
-			const tableBody = document.getElementById("tableBody");
-			tableBody.innerHTML = "";
+			// ✅ Load Changes File
+			fetch(`/json/${changesFile}`)
+				.then(response => response.ok ? response.json() : Promise.reject("Changes file not found"))
+				.then(data => {
+					console.log("📌 Received Changes Data:", data);
+					if (Array.isArray(data) && data.length > 0) {
+						console.log("✅ Loading existing race changes...");
+						loadExistingData(data); // ✅ Ensure we pass the correct data format
+					} else {
+						console.warn("⚠ No valid race changes found in file.");
+					}
+				})
+				.catch(error => console.log("❌ No changes file found:", error));
 
-			// Extract the races from the JSON
-			const racesData = data[0]?.races || [];
-
-			// Populate the text fields for Track, Weather, and Variant
-			document.getElementById("trackCondition").value = data[0]?.Track || "";
-			document.getElementById("weather").value = data[0]?.Weather || "";
-			document.getElementById("variant").value = data[0]?.Variant || "";
-
-			// Populate the table with race data
-			racesData.forEach(entry => {
-				addRow(entry);
-			});
-
-			addRow(); // Add an empty row for new input
 		}
 
+
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//UPDATE ALL DROPDOWNS		
+		function updateAllDropdowns() {
+			console.log("📌 Updating all Race Number & Saddle Pad dropdowns...");
+			
+			document.querySelectorAll(".raceNumber").forEach(raceSelect => {
+				let selectedRace = raceSelect.value;
+				raceSelect.innerHTML = '<option value="">Select</option>';
+
+				Object.keys(window.horseEntries).forEach(raceNum => {
+					let option = document.createElement("option");
+					option.value = raceNum;
+					option.textContent = raceNum;
+					raceSelect.appendChild(option);
+				});
+
+				raceSelect.value = selectedRace; // ✅ Restore previous selection
+				raceSelect.dispatchEvent(new Event("change")); // ✅ Trigger update for Saddle Pads
+			});
+
+			console.log("✅ Dropdowns updated with race entries.");
+		}
+		
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//CHECK ENTRIES
+		document.getElementById("raceDate").addEventListener("change", function () {
+			let selectedDate = this.value;
+			let trackName = document.getElementById("trackName").value;
+
+			if (!selectedDate || !trackName) return;
+
+			console.log("📌 Checking for existing entries:", trackName, selectedDate);
+
+			fetch(`http://localhost:3000/get-entries?trackName=${trackName}&raceDate=${selectedDate}`)
+				.then(response => response.json())
+				.then(data => {
+					console.log("📌 Received JSON Response:", data);
+
+					if (data.horseEntries) {
+						console.log("✅ Auto-loading horse entries...");
+						window.horseEntries = data.horseEntries;  // ✅ Store horse entries globally
+					}
+
+					if (data.raceChanges && data.raceChanges.length > 0) {
+						console.log("✅ Found existing race changes:", data.raceChanges);
+						loadExistingRaceChanges(data.raceChanges);
+					} else {
+						console.log("❌ No race changes found.");
+					}
+				})
+				.catch(error => console.log("❌ No stored entries found for selected date.", error));
+		});
+
+
+		//////////////////////////////////////////////////////////////////////////////////////////////////////
+		//LOAD EXISTING CHANGES
+		function loadExistingData(raceChanges) {
+			console.log("📌 Loading existing data:", raceChanges);
+
+			if (!Array.isArray(raceChanges) || raceChanges.length === 0) {
+				console.warn("⚠ No valid race changes to load.");
+				return;
+			}
+
+			const tableBody = document.getElementById("tableBody");
+			tableBody.innerHTML = ""; // ✅ Clear previous table content
+
+			raceChanges.forEach(entry => {
+				if (!entry.raceNumber || !entry.saddlePad || !entry.category) {
+					console.warn("⚠ Skipping invalid entry:", entry);
+					return;
+				}
+				addRow(entry); // ✅ Load each saved change into the table
+			});
+
+			console.log("✅ All changes successfully loaded into UI.");
+		}
+
+		///////////////////////////////////////////////////////////////////////////////////////////////////////
+		//SAVE DATA
 		function saveData() {
 			const trackName = document.getElementById('trackName').value;
 			const raceDate = document.getElementById('raceDate').value;
-			const trackCondition = document.getElementById('trackCondition').value || "";
-			const weather = document.getElementById('weather').value || "";
-			const variant = document.getElementById('variant').value || "";
 			if (!trackName || !raceDate) {
 				alert("Please select Track Name and Date.");
 				return;
 			}
 
 			let data = [];
-			let races = [];
 			const rows = document.querySelectorAll("tbody tr");
-			
+
 			rows.forEach(row => {
-				const raceNumber = row.querySelector(".raceNumber").value;
+				let raceNumber = row.querySelector(".raceNumber").value;
 				let saddlePad = row.querySelector(".saddlePad").value;
 				let horseName = row.querySelector(".horseName").value;
-				const category = row.querySelector(".changeCategory").value;
-				const changeText = row.querySelector(".changeText").value;
+				let category = row.querySelector(".changeCategory").value;
+				let changeText = row.querySelector(".changeText").value;
 
-				// ✅ Only save if Race Number and Change are entered
-				if (!raceNumber || !changeText) return;
+				if (!raceNumber || !category) return; // ✅ Skip invalid rows
 
-				// ✅ Replace "N/A" or empty values with proper formatting
-				saddlePad = saddlePad === "N/A" || saddlePad === "" ? "" : saddlePad;
-				horseName = horseName === "N/A" || horseName === "" ? "" : horseName;
-
-				races.push({
-					raceNumber: parseInt(raceNumber),
-					saddlePad: saddlePad === "" ? -1 : parseInt(saddlePad), // Sort blank saddle pads first
+				data.push({
+					raceNumber: raceNumber.toString(),
+					saddlePad: saddlePad ? saddlePad.toString() : "",
 					horseName,
 					category,
 					change: changeText
 				});
 			});
-
-			// ✅ Sort by Race Number, then place blank saddle pads first
-			races.sort((a, b) => {
-				if (a.raceNumber !== b.raceNumber) {
-					return a.raceNumber - b.raceNumber;
-				}
-				return a.saddlePad - b.saddlePad; // Places blank (-1) saddle pads first
-			});
-
-			// ✅ Convert saddle pads back to strings (blanks stay blank)
-			races = races.map(entry => ({
-				raceNumber: entry.raceNumber.toString(),
-				saddlePad: entry.saddlePad === -1 ? "" : entry.saddlePad.toString(),
-				horseName: entry.horseName,
-				category: entry.category,
-				change: entry.change
-			}));
-			
-			data.push({TrackName: trackName, Date: raceDate, Track: trackCondition, Weather: weather, Variant: variant, races});
 
 			const fileName = `${trackName}_${raceDate}_changes.json`;
 
@@ -261,12 +324,15 @@
 				body: JSON.stringify({ fileName, data })
 			})
 			.then(response => response.text())
-			.then(result => alert(result))
-			.catch(error => console.error('Error:', error));
+			.then(result => {
+				console.log("✅ Save successful:", result);
+				alert(result);
+			})
+			.catch(error => console.error('❌ Error saving data:', error));
 		}
 
-
-		
+		////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//DOWNLOAD PDF
 		function downloadPDF() {
 			if (!window.jspdf) {
 				alert("Error: jsPDF library is not loaded.");
@@ -323,7 +389,7 @@
 				change = change === "N/A" ? "" : change;
 
 				data.push({
-					raceNumber: "RACE " + parseInt(raceNumber),
+					raceNumber: raceNumber, //"RACE " + parseInt(raceNumber),
 					saddlePad: saddlePad === "" ? -1 : parseInt(saddlePad),
 					horseName,
 					category,
@@ -431,120 +497,165 @@
 		}
 
 
+		////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//ADD ROW
+		function addRow(entry = {}) {
+			const tableBody = document.getElementById("tableBody");
+			let row = document.createElement("tr");
 
- function addRow(entry = {}) {
-    const tableBody = document.getElementById("tableBody");
-    
-    let row = document.createElement("tr");
-    
-    // Race Number Dropdown
-    let raceCell = document.createElement("td");
-    let raceSelect = document.createElement("select");
-    raceSelect.className = "raceNumber";
-    raceSelect.innerHTML = '<option value="">Select</option>';
-    for (let j = 1; j <= 30; j++) {
-        let option = document.createElement("option");
-        option.value = j;
-        option.textContent = j;
-        if (entry.raceNumber == j) option.selected = true;
-        raceSelect.appendChild(option);
-    }
-    raceSelect.addEventListener("change", function() {
-        if (this.value) addRow();
-    });
-    raceCell.appendChild(raceSelect);
-    row.appendChild(raceCell);
-    
-    // Saddle Pad Dropdown
-    let saddleCell = document.createElement("td");
-    let saddleSelect = document.createElement("select");
-    saddleSelect.className = "saddlePad";
-    saddleSelect.innerHTML = '<option value="">Select</option>';
-    for (let k = 1; k <= 20; k++) {
-        let option = document.createElement("option");
-        option.value = k;
-        option.textContent = k;
-        if (entry.saddlePad == k) option.selected = true;
-        saddleSelect.appendChild(option);
-    }
-    saddleCell.appendChild(saddleSelect);
-    row.appendChild(saddleCell);
-    
-    // Horse Name Input
-    let horseCell = document.createElement("td");
-    let horseInput = document.createElement("input");
-    horseInput.type = "text";
-    horseInput.className = "horseName";
-    horseInput.value = entry.horseName || "";
-    horseCell.appendChild(horseInput);
-    row.appendChild(horseCell);
+			console.log("📌 Adding row for entry:", entry);
 
-    // ✅ Category Dropdown
-    let categoryCell = document.createElement("td");
-    let categorySelect = document.createElement("select");
-    categorySelect.className = "changeCategory";
-    categorySelect.innerHTML = `
-        <option value="">Select Category</option>
-        <option value="Driver Change">Driver Change</option>
-        <option value="Trainer Change">Trainer Change</option>
-        <option value="Owner Change">Owner Change</option>
-        <option value="Medication Change">Medication Change</option>
-        <option value="SCRATCHED">SCRATCHED</option>
-        <option value="Equipment Change">Equipment Change</option>
-        <option value="Claimed">Claimed</option>
-        <option value="Other">Other</option>
-    `;
-    if (entry.category) {
-        categorySelect.value = entry.category;
-    }
-	
-	categorySelect.addEventListener("change", function() {
-		if (this.value === "Driver Change") {
-			openDriverPopup(changeInput);
-		} else if (this.value === "Equipment Change") {
-			openEquipmentPopup(changeInput);
+			// ✅ Race Number Dropdown
+			let raceCell = document.createElement("td");
+			let raceSelect = document.createElement("select");
+			raceSelect.className = "raceNumber";
+			raceSelect.innerHTML = '<option value="">Select</option>';
+
+			function updateRaceDropdown() {
+				if (window.horseEntries && Object.keys(window.horseEntries).length > 0) {
+					Object.keys(window.horseEntries).forEach(raceNum => {
+						let option = document.createElement("option");
+						option.value = raceNum;
+						option.textContent = raceNum;
+						raceSelect.appendChild(option);
+					});
+				}
+			}
+
+			updateRaceDropdown();
+			raceCell.appendChild(raceSelect);
+			row.appendChild(raceCell);
+
+			// ✅ Saddle Pad Dropdown
+			let saddleCell = document.createElement("td");
+			let saddleSelect = document.createElement("select");
+			saddleSelect.className = "saddlePad";
+			saddleSelect.innerHTML = '<option value="">Select</option>';
+			saddleCell.appendChild(saddleSelect);
+			row.appendChild(saddleCell);
+
+			// ✅ Horse Name Input
+			let horseCell = document.createElement("td");
+			let horseInput = document.createElement("input");
+			horseInput.type = "text";
+			horseInput.className = "horseName";
+			horseInput.value = entry.horseName || "";
+			horseCell.appendChild(horseInput);
+			row.appendChild(horseCell);
+
+			// ✅ Auto-populate Saddle Pads based on Race Selection
+			function updateSaddlePadOptions() {
+				let selectedRace = raceSelect.value;
+				saddleSelect.innerHTML = '<option value="">Select</option>';
+
+				if (selectedRace && window.horseEntries[selectedRace]) {
+					window.horseEntries[selectedRace].forEach(horse => {
+						let option = document.createElement("option");
+						option.value = horse.saddlePad;
+						option.textContent = horse.saddlePad;
+						saddleSelect.appendChild(option);
+					});
+				}
+
+				if (entry.saddlePad) {
+					saddleSelect.value = entry.saddlePad;
+				}
+			}
+
+			raceSelect.addEventListener("change", updateSaddlePadOptions);
+
+			saddleSelect.addEventListener("change", function () {
+				let selectedRace = raceSelect.value;
+				let selectedSaddlePad = saddleSelect.value;
+				if (selectedRace && selectedSaddlePad && window.horseEntries[selectedRace]) {
+					let horse = window.horseEntries[selectedRace].find(h => h.saddlePad === selectedSaddlePad);
+					if (horse) {
+						horseInput.value = horse.horseName;
+					}
+				}
+			});
+
+		// ✅ Category Dropdown
+		let categoryCell = document.createElement("td");
+		let categorySelect = document.createElement("select");
+		categorySelect.className = "changeCategory";
+		categorySelect.innerHTML = `
+			<option value="">Select Category</option>
+			<option value="Driver Change">Driver Change</option>
+			<option value="Trainer Change">Trainer Change</option>
+			<option value="Owner Change">Owner Change</option>
+			<option value="Medication Change">Medication Change</option>
+			<option value="SCRATCHED">SCRATCHED</option>
+			<option value="Equipment Change">Equipment Change</option>
+			<option value="Claimed">Claimed</option>
+			<option value="Other">Other</option>
+		`;
+
+		if (entry.category) {
+			categorySelect.value = entry.category;
 		}
-	});
 
-    categoryCell.appendChild(categorySelect);
-    row.appendChild(categoryCell);
+		categorySelect.addEventListener("change", function () {
+			if (this.value === "Driver Change") {
+				console.log("📌 Opening Driver Popup...");
+				openDriverPopup(changeInput);  // ✅ Pass the correct text field
+			} else if (this.value === "Equipment Change") {
+				console.log("📌 Opening Equipment Popup...");
+				openEquipmentPopup(changeInput);  // ✅ Pass the correct text field
+			}
+		});
 
-    // ✅ Change Text Area
-    let changeCell = document.createElement("td");
-    let changeInput = document.createElement("textarea");
-    changeInput.className = "changeText";
-    changeInput.value = entry.change || "";
-    changeCell.appendChild(changeInput);
-    row.appendChild(changeCell);
+		categoryCell.appendChild(categorySelect);
+		row.appendChild(categoryCell);
 
-    // ✅ Open popup when "Driver Change" is selected
-    categorySelect.addEventListener("change", function() {
-        if (this.value === "Driver Change") {
-            openDriverPopup(changeInput); // Pass Change Text field to be updated
-        }
-    });
-    
-    // Delete Button
-    let deleteCell = document.createElement("td");
-    let deleteButton = document.createElement("button");
-    deleteButton.className = "deleteBtn";
-    deleteButton.textContent = "Delete";
-    deleteButton.onclick = function() { row.remove(); };
-    deleteCell.appendChild(deleteButton);
-    row.appendChild(deleteCell);
-    
-    tableBody.appendChild(row);
-}
 
-let currentEquipmentField; // Store the text field being updated
-let selectedEquipmentChanges = []; // Array to hold selected changes
+			// ✅ Change Text Area
+			let changeCell = document.createElement("td");
+			let changeInput = document.createElement("textarea");
+			changeInput.className = "changeText";
+			changeInput.value = entry.change || "";
+			changeCell.appendChild(changeInput);
+			row.appendChild(changeCell);
+
+			// ✅ Delete Button
+			let deleteCell = document.createElement("td");
+			let deleteButton = document.createElement("button");
+			deleteButton.className = "deleteBtn";
+			deleteButton.textContent = "Delete";
+			deleteButton.onclick = function () {
+				row.remove();
+			};
+			deleteCell.appendChild(deleteButton);
+			row.appendChild(deleteCell);
+
+			tableBody.appendChild(row);
+
+			// ✅ Load Saved Data
+			raceSelect.value = entry.raceNumber || "";
+			updateSaddlePadOptions();
+			setTimeout(() => {
+				saddleSelect.value = entry.saddlePad || "";
+				saddleSelect.dispatchEvent(new Event("change"));
+			}, 100);
+		}
+
+
+
+
+		////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//EQUIPMENT CHANGES POP-UP
+//let currentEquipmentField; // Store the text field being updated
+
+
 
 function openEquipmentPopup(changeTextField) {
-    currentEquipmentField = changeTextField; // Store reference to Change Text field
+    if (!changeTextField) {
+        console.error("❌ Error: Equipment Text Field is undefined!");
+        return;
+    }
 
-    // ✅ Load existing changes from ChangeText field
-    let existingChanges = currentEquipmentField.value ? currentEquipmentField.value.split(", ") : [];
-    selectedEquipmentChanges = [...existingChanges]; // Copy existing changes
+    currentEquipmentField = changeTextField; // ✅ Store reference properly
+    console.log("📌 Equipment Popup Opened, Target Field Set:", currentEquipmentField);
 
     fetch("/json/equipment.json")
         .then(response => response.ok ? response.json() : [])
@@ -554,7 +665,6 @@ function openEquipmentPopup(changeTextField) {
 
             dropdown.innerHTML = ""; // Clear previous options
 
-            // Populate dropdown with equipment options
             equipmentList.forEach(item => {
                 let option = document.createElement("option");
                 option.value = item;
@@ -562,20 +672,19 @@ function openEquipmentPopup(changeTextField) {
                 dropdown.appendChild(option);
             });
 
-            // ✅ Pre-fill the text field if "HOPPLE LENGTH" is selected
-            dropdown.addEventListener("change", function() {
+            dropdown.addEventListener("change", function () {
                 if (this.value.toUpperCase() === "HOPPLE LENGTH") {
                     newEquipmentField.value = "HOPPLE LENGTH "; // Pre-fill for user input
                 } else {
-                    newEquipmentField.value = this.value; // Copy selection to text field
+                    newEquipmentField.value = this.value;
                 }
             });
 
-            // ✅ Populate preview with existing changes
+            let existingChanges = currentEquipmentField.value ? currentEquipmentField.value.split(", ") : [];
+            selectedEquipmentChanges = [...existingChanges]; // Copy existing changes
             document.getElementById("equipmentPreview").value = selectedEquipmentChanges.join(", ");
 
-            // Enable search filtering
-            newEquipmentField.addEventListener("keyup", function() {
+            newEquipmentField.addEventListener("input", function () {
                 filterEquipment(this.value, equipmentList);
             });
 
@@ -584,6 +693,8 @@ function openEquipmentPopup(changeTextField) {
 
     document.getElementById("equipmentPopup").classList.remove("hidden");
 }
+
+
 
 
 function filterEquipment(searchTerm, equipmentList) {
@@ -693,10 +804,16 @@ function checkEnter(event) {
     }
 }
 
-let currentChangeTextField; // Store the current text field for update
+//let currentChangeTextField; // Store the current text field for update
 
 function openDriverPopup(changeTextField) {
-    currentChangeTextField = changeTextField; // Store the field reference
+    if (!changeTextField) {
+        console.error("❌ Error: Change Text Field is undefined!");
+        return;
+    }
+
+    currentChangeTextField = changeTextField; // ✅ Store reference properly
+    console.log("📌 Driver Popup Opened, Target Field Set:", currentChangeTextField);
 
     fetch("/json/drivers.json")
         .then(response => response.ok ? response.json() : [])
@@ -704,7 +821,6 @@ function openDriverPopup(changeTextField) {
             let driverList = document.getElementById("driverList");
             driverList.innerHTML = ""; // Clear previous list
 
-            // Populate dropdown with all driver names
             drivers.forEach(driver => {
                 let option = document.createElement("option");
                 option.value = driver;
@@ -712,8 +828,7 @@ function openDriverPopup(changeTextField) {
                 driverList.appendChild(option);
             });
 
-            // Enable search filtering
-            document.getElementById("newDriver").addEventListener("keyup", function() {
+            document.getElementById("newDriver").addEventListener("input", function () {
                 filterDrivers(this.value, drivers);
             });
 
@@ -722,6 +837,9 @@ function openDriverPopup(changeTextField) {
 
     document.getElementById("driverPopup").classList.remove("hidden");
 }
+
+
+
 
 function filterDrivers(searchTerm, drivers) {
     let driverList = document.getElementById("driverList");
@@ -790,6 +908,142 @@ function closePopup() {
     document.getElementById("newDriver").value = ""; // Reset input field
 }
 
+function updateSaddlePadDropdown(row, raceNumber) {
+    let saddleSelect = row.querySelector(".saddlePad");
+    saddleSelect.innerHTML = '<option value="">Select</option>'; // Reset dropdown
+
+    if (!window.horseEntries || !window.horseEntries[raceNumber]) return;
+
+    let horseList = window.horseEntries[raceNumber];
+
+    horseList.forEach(horse => {
+        let option = document.createElement("option");
+        option.value = horse.saddlePad; // Use saddle pad number
+        option.textContent = horse.saddlePad; // Display saddle pad number
+        saddleSelect.appendChild(option);
+    });
+
+    saddleSelect.addEventListener("change", function() {
+        autoFillHorseName(row, raceNumber, this.value);
+    });
+}
+
+
+function autoFillHorseName(row, raceNumber, saddlePad) {
+    let horseInput = row.querySelector(".horseName");
+
+    if (!window.horseEntries || !window.horseEntries[raceNumber]) return;
+
+    let horseList = window.horseEntries[raceNumber];
+
+    let horse = horseList.find(e => e.saddlePad === saddlePad);
+    horseInput.value = horse ? horse.horseName : "";
+}
+
+
+
+function uploadFile() {
+    const fileInput = document.getElementById("entryFile");
+    if (!fileInput.files.length) {
+        alert("Please select a file.");
+        return;
+    }
+
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+
+    reader.onload = function(event) {
+        const fileContent = event.target.result;
+        console.log("File Content Loaded:", fileContent.substring(0, 500)); // Log first 500 chars
+
+        // ✅ Parse horse entries (correcting order for 103 and 201)
+        const horseEntries = {};
+        let currentRace = null;
+        let saddlePad = null;
+        let extractedDate = null;
+        const lines = fileContent.split("\n");
+
+        lines.forEach(line => {
+            let parts = line.trim().split(">"); // Split at '>' to isolate key-value pairs
+            
+            parts.forEach(part => {
+                if (part.includes("<")) {
+                    let keyValue = part.split("<");
+
+                    if (keyValue.length < 2) {
+                        return; // Skip if key-value format is incorrect
+                    }
+
+                    let key = keyValue[0].trim();
+                    let value = keyValue[1].trim();
+
+                    if (key === "001") {
+                        // ✅ Extract the race date (ignoring first 4 chars & last 2)
+                        let rawDate = value.substring(5, value.length - 2); // Extract DD-MMM-YY format
+
+                        // ✅ Convert to YYYY-MM-DD
+                        try {
+                            let dateObj = new Date(rawDate.replace(/(\d{0})-(\w{3})-(\d{4})/, "$3-$2-$1"));
+                            extractedDate = dateObj.toISOString().split("T")[0]; // Format YYYY-MM-DD
+                        } catch (error) {
+                            console.warn("Date parsing failed:", rawDate);
+                        }
+                    }
+
+                    if (key === "103") {
+                        // ✅ Store saddlePad BEFORE horse entry appears
+                        saddlePad = value;
+
+                    } else if (key === "201") {
+                        // ✅ New Race Detected
+                        if (currentRace === null) {
+                            currentRace = `Race ${Object.keys(horseEntries).length + 1}`;
+                            horseEntries[currentRace] = [];
+                        }
+
+                        // ✅ Assign the last stored saddlePad to the horse entry
+                        horseEntries[currentRace].push({ saddlePad, horseName: value });
+
+                    } else if (key === "999") {
+                        // ✅ End of the race
+                        currentRace = null;
+                        saddlePad = null;
+                    }
+                }
+            });
+        });
+
+        console.log("Extracted Horse Entries with SaddlePads:", horseEntries);
+        console.log("Extracted Date:", extractedDate);
+
+        // ✅ Set Date Field Automatically
+        if (extractedDate) {
+            document.getElementById("raceDate").value = extractedDate;
+        }
+
+        // ✅ Send data to the backend for temporary storage
+        const trackName = document.getElementById("trackName").value;
+        const raceDate = extractedDate || document.getElementById("raceDate").value; // Use extracted date if available
+
+        fetch("http://localhost:3000/save-entries", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ trackName, raceDate, horseEntries })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Entries stored successfully!");
+                window.horseEntries = horseEntries; // Store in memory for dropdown use
+            } else {
+                alert("Error storing entries.");
+            }
+        })
+        .catch(error => console.error("Error storing entries:", error));
+    };
+
+    reader.readAsText(file);
+}
 
     </script>
 </head>
@@ -801,7 +1055,10 @@ function closePopup() {
 	</div>
     
     <div class="container hidden" id="raceChangesPage">
-        <h2>Race Changes</h2>
+        <h2>Race Changes</h2>		
+		<table>
+            <thead><tr><input type="file" id="entryFile" accept=".cam"><button onclick="uploadFile()">Load File</button></tr></thead>
+        </table>
         <label for="trackName">Track Name:</label>
         <select id="trackName" onchange="checkForExistingData()"></select>
         <label for="raceDate">Date:</label>
