@@ -42,10 +42,10 @@ app.get("/json/:fileName", (req, res) => {
     const filePath = path.join(JSON_DIR, req.params.fileName);
 
     if (!fs.existsSync(filePath)) {
-        console.log(`❌ File not found: ${filePath} - Creating empty file.`);
-        fs.writeFileSync(filePath, JSON.stringify([])); // ✅ Create empty file
-        return res.status(200).json([]);
+        console.log(`❌ File not found: ${filePath}`);
+        return res.status(404).json({ error: "File not found." }); // ❌ Don't create unnecessary files
     }
+
 
     try {
         const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
