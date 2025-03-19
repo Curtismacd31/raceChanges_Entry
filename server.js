@@ -66,12 +66,14 @@ app.post("/save-entries", (req, res) => {
     }
 
     const filePath = path.join(JSON_DIR, `${trackName}_${raceDate}_entries.json`);
-
+    
     // ✅ Ensure directory and file exist
-    if (!fs.existsSync(JSON_DIR)) {
-        fs.mkdirSync(JSON_DIR, { recursive: true });
-        console.log("✅ Created JSON directory.");
+    if (!fs.existsSync(filePath)) {
+        const emptyData = { horseEntries: {}, raceChanges: [] };
+        fs.writeFileSync(filePath, JSON.stringify(emptyData, null, 2));
+        console.log(`✅ Created new file: ${filePath}`);
     }
+
 
     const dataToSave = {
         horseEntries: horseEntries || {},
