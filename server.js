@@ -117,25 +117,28 @@ app.get("/get-entries", (req, res) => {
 });
 
 
-// ✅ Flush expired files (older than 24 hours)
+// ✅ Cleanup function to delete temp files older than 24 hours
 function cleanUpOldEntries() {
+    console.log("🔍 Running temp file cleanup...");
     const files = fs.readdirSync(TEMP_DIR);
     const now = Date.now();
 
     files.forEach(file => {
-        const filePath = `${TEMP_DIR}/${file}`;
-        const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
-
-        if (now - data.timestamp > 24 * 60 * 60 * 1000) {
-            fs.unlinkSync(filePath);
-            console.log(`Deleted expired file: ${file}`);
+        const filePath = path.join(TEMP_DIR, file);
+        try {
+            const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+            if (data.timestamp && (now - data.timestamp > 24 * 60 * 60 * 1000)) {
+                fs.unlinkSync(filePath);
+                console.log(`🗑️ Deleted expired file: ${file}`);
+            }
+        } catch (error) {
+            console.warn(`⚠️ Failed to process file ${file}:`, error);
         }
     });
 }
 
-// ✅ Run cleanup every hour
+// ✅ Run Cleanup Every Hour (60 * 60 * 1000 ms)
 setInterval(cleanUpOldEntries, 60 * 60 * 1000);
-
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
