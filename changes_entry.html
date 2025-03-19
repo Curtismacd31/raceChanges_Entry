@@ -178,7 +178,7 @@
 			
 			
 			// ✅ Load Entries File
-			fetch(`/temp_entries/${entriesFile}`)
+			fetch(`/json/${entriesFile}`)
 				.then(response => response.ok ? response.json() : Promise.reject("Entries file not found"))
 				.then(entries => {
 					console.log("📌 Received Race Entries:", entries);
