@@ -941,7 +941,8 @@ function autoFillHorseName(row, raceNumber, saddlePad) {
 }
 
 
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+//UPLOAD NEW FILE
 function uploadFile() {
     const fileInput = document.getElementById("entryFile");
     if (!fileInput.files.length) {
@@ -1013,8 +1014,27 @@ function uploadFile() {
             document.getElementById("raceDate").value = extractedDate;
         }
 
-        const trackName = document.getElementById("trackName").value;
-        const raceDate = extractedDate || document.getElementById("raceDate").value;
+        const trackName = document.getElementById("trackName").value.trim();
+	let raceDate = extractedDate || document.getElementById("raceDate").value.trim();
+	
+	if (!raceDate) {
+	    alert("❌ No valid race date found!");
+	    return;
+	}
+	
+	// ✅ Ensure Correct YYYY-MM-DD Format
+	try {
+	    const dateObj = new Date(raceDate);
+	    if (isNaN(dateObj)) {
+	        throw new Error("Invalid date");
+	    }
+	    raceDate = dateObj.toISOString().split("T")[0];
+	} catch (error) {
+	    console.error("❌ Date parsing failed:", raceDate);
+	    alert("Invalid date format. Please check the race date.");
+	    return;
+	}
+
 
         // ✅ Send entries to backend for saving
         fetch("https://racechanges-entry.onrender.com/save-entries", {  // Ensure full API URL
