@@ -43,9 +43,8 @@ app.get("/json/:fileName", (req, res) => {
 
     if (!fs.existsSync(filePath)) {
         console.log(`❌ File not found: ${filePath}`);
-        return res.status(404).json({ error: "File not found." }); // ❌ Don't create unnecessary files
+        return res.status(404).json({ error: "File not found." });
     }
-
 
     try {
         const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
@@ -59,21 +58,32 @@ app.get("/json/:fileName", (req, res) => {
 
 // ✅ Save Race Entries & Changes
 app.post("/save-entries", (req, res) => {
-    const { trackName, raceDate, horseEntries, raceChanges } = req.body;
+    let { trackName, raceDate, horseEntries, raceChanges } = req.body;
 
     if (!trackName || !raceDate || !horseEntries) {
+        console.error("❌ Missing required fields:", { trackName, raceDate, horseEntries });
         return res.status(400).json({ error: "Missing required fields." });
     }
 
-    const filePath = path.join(JSON_DIR, `${trackName}_${raceDate}_entries.json`);
-    
-    // ✅ Ensure directory and file exist
-    if (!fs.existsSync(filePath)) {
-        const emptyData = { horseEntries: {}, raceChanges: [] };
-        fs.writeFileSync(filePath, JSON.stringify(emptyData, null, 2));
-        console.log(`✅ Created new file: ${filePath}`);
+    // ✅ Ensure proper date format
+    try {
+        const dateObj = new Date(raceDate);
+        if (isNaN(dateObj)) {
+            throw new Error("Invalid date");
+        }
+        raceDate = dateObj.toISOString().split("T")[0]; // Ensure proper format YYYY-MM-DD
+    } catch (error) {
+        console.error("❌ Date parsing failed:", raceDate);
+        return res.status(400).json({ error: "Invalid date format." });
     }
 
+    const filePath = path.join(JSON_DIR, `${trackName}_${raceDate}_entries.json`);
+
+    // ✅ Ensure directory and file exist
+    if (!fs.existsSync(JSON_DIR)) {
+        fs.mkdirSync(JSON_DIR, { recursive: true });
+        console.log("✅ Created JSON directory.");
+    }
 
     const dataToSave = {
         horseEntries: horseEntries || {},
@@ -96,7 +106,7 @@ app.get("/get-entries", (req, res) => {
     const filePath = path.join(JSON_DIR, `${trackName}_${raceDate}_entries.json`);
 
     if (!fs.existsSync(filePath)) {
-        console.log(`❌ Entries file not found: ${filePath} - Creating empty file.`);
+        console.log(`❌ Entries file not found: ${filePath}`);
         const emptyData = { horseEntries: {}, raceChanges: [] };
         fs.writeFileSync(filePath, JSON.stringify(emptyData, null, 2));
         return res.status(200).json(emptyData);
@@ -110,6 +120,11 @@ app.get("/get-entries", (req, res) => {
         console.error(`❌ Error reading entries file ${filePath}:`, error);
         res.status(500).json({ error: "Error reading entries file" });
     }
+});
+
+// ✅ Test Route to Verify Server is Running
+app.get("/status", (req, res) => {
+    res.json({ success: true, message: "Server is running." });
 });
 
 const PORT = process.env.PORT || 3000;
