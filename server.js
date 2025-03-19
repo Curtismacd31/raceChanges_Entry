@@ -3,42 +3,46 @@ const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
 
-const TEMP_DIR = path.join(__dirname, "temp_entries");
+const JSON_DIR = path.join(__dirname, "json");
 
-console.log(`Checking TEMP_DIR existence: ${fs.existsSync(TEMP_DIR)}`);
-console.log(`TEMP_DIR Path: ${TEMP_DIR}`);
+console.log(`Checking JSON_DIR existence: ${fs.existsSync(JSON_DIR)}`);
+console.log(`JSON_DIR Path: ${JSON_DIR}`);
 
-if (!fs.existsSync(TEMP_DIR)) {
-    fs.mkdirSync(TEMP_DIR, { recursive: true });
-    console.log("✅ Temp directory created on startup.");
+// ✅ Ensure JSON directory exists
+if (!fs.existsSync(JSON_DIR)) {
+    fs.mkdirSync(JSON_DIR, { recursive: true });
+    console.log("✅ JSON directory created on startup.");
 }
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cors());
-app.use(express.static(__dirname)); // Serve static files
+app.use(express.static(__dirname)); // ✅ Serve static files
 
+// ✅ Save JSON Files
 app.post('/save', (req, res) => {
     const { fileName, data } = req.body;
     if (!fileName || !data) {
         return res.status(400).send("Invalid request: Missing fileName or data");
     }
 
-    const filePath = path.join(__dirname, "json", fileName);
+    const filePath = path.join(JSON_DIR, fileName);
     console.log(`Saving file: ${filePath}`);
 
     fs.writeFile(filePath, JSON.stringify(data, null, 2), (err) => {
         if (err) {
-            console.error("Error saving file:", err);
+            console.error("❌ Error saving file:", err);
             return res.status(500).send("Error saving file.");
         } else {
-            res.send(`File saved as ${fileName}`);
+            res.send(`✅ File saved as ${fileName}`);
         }
     });
 });
 
+// ✅ Serve JSON Files
 app.get("/json/:fileName", (req, res) => {
-    const filePath = `${TEMP_DIR}/${req.params.fileName}`;
+    const filePath = path.join(JSON_DIR, req.params.fileName);
 
     if (!fs.existsSync(filePath)) {
         console.log(`❌ File not found: ${filePath}`);
@@ -55,23 +59,7 @@ app.get("/json/:fileName", (req, res) => {
     }
 });
 
-
-
-
-
-
-
-// ✅ Increase request body size limit
-app.use(express.json({ limit: "10mb" })); // Increase to 10MB
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-
-//const TEMP_DIR = "./temp_entries";
-
-// ✅ Ensure temp directory exists
-if (!fs.existsSync(TEMP_DIR)) {
-    fs.mkdirSync(TEMP_DIR);
-}
-
+// ✅ Save Race Entries & Changes (Now in /json folder)
 app.post("/save-entries", (req, res) => {
     const { trackName, raceDate, horseEntries, raceChanges } = req.body;
 
@@ -79,9 +67,8 @@ app.post("/save-entries", (req, res) => {
         return res.status(400).json({ error: "Missing required fields." });
     }
 
-    const filePath = `${TEMP_DIR}/${trackName}_${raceDate}_entries.json`;
+    const filePath = path.join(JSON_DIR, `${trackName}_${raceDate}_entries.json`);
 
-    // ✅ Ensure both horseEntries and raceChanges are saved
     const dataToSave = {
         horseEntries,
         raceChanges: raceChanges || []
@@ -97,48 +84,21 @@ app.post("/save-entries", (req, res) => {
     }
 });
 
-
-
-// ✅ Retrieve stored entries
+// ✅ Retrieve Stored Entries (From /json instead of /temp_entries)
 app.get("/get-entries", (req, res) => {
     const { trackName, raceDate } = req.query;
-    const filePath = `${TEMP_DIR}/${trackName}_${raceDate}_entries.json`;
+    const filePath = path.join(JSON_DIR, `${trackName}_${raceDate}_entries.json`);
 
     if (!fs.existsSync(filePath)) {
         return res.status(404).json({ error: "No stored entries found." });
     }
 
     const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
-
     res.json({
         horseEntries: data.horseEntries || {},
         raceChanges: data.raceChanges || []
     });
 });
 
-
-// ✅ Cleanup function to delete temp files older than 24 hours
-function cleanUpOldEntries() {
-    console.log("🔍 Running temp file cleanup...");
-    const files = fs.readdirSync(TEMP_DIR);
-    const now = Date.now();
-
-    files.forEach(file => {
-        const filePath = path.join(TEMP_DIR, file);
-        try {
-            const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
-            if (data.timestamp && (now - data.timestamp > 24 * 60 * 60 * 1000)) {
-                fs.unlinkSync(filePath);
-                console.log(`🗑️ Deleted expired file: ${file}`);
-            }
-        } catch (error) {
-            console.warn(`⚠️ Failed to process file ${file}:`, error);
-        }
-    });
-}
-
-// ✅ Run Cleanup Every Hour (60 * 60 * 1000 ms)
-setInterval(cleanUpOldEntries, 60 * 60 * 1000);
-
-const PORT = 3000;
-app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🚀 Server running at http://localhost:${PORT}`));
