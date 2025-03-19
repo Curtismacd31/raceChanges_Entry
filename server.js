@@ -20,25 +20,37 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cors());
 app.use(express.static(__dirname)); // ✅ Serve static files
 
-// ✅ Save JSON Files
-app.post('/save', (req, res) => {
-    const { fileName, data } = req.body;
-    if (!fileName || !data) {
-        return res.status(400).send("Invalid request: Missing fileName or data");
+// ✅ Save Race Entries & Changes (Always Save File)
+app.post("/save-entries", (req, res) => {
+    const { trackName, raceDate, horseEntries, raceChanges } = req.body;
+
+    if (!trackName || !raceDate || !horseEntries) {
+        return res.status(400).json({ error: "Missing required fields." });
     }
 
-    const filePath = path.join(JSON_DIR, fileName);
-    console.log(`Saving file: ${filePath}`);
+    const filePath = path.join(JSON_DIR, `${trackName}_${raceDate}_entries.json`);
 
-    fs.writeFile(filePath, JSON.stringify(data, null, 2), (err) => {
-        if (err) {
-            console.error("❌ Error saving file:", err);
-            return res.status(500).send("Error saving file.");
-        } else {
-            res.send(`✅ File saved as ${fileName}`);
-        }
-    });
+    // ✅ Ensure directory and file exist
+    if (!fs.existsSync(JSON_DIR)) {
+        fs.mkdirSync(JSON_DIR, { recursive: true });
+        console.log("✅ Created JSON directory.");
+    }
+
+    const dataToSave = {
+        horseEntries: horseEntries || {},
+        raceChanges: raceChanges || []
+    };
+
+    try {
+        fs.writeFileSync(filePath, JSON.stringify(dataToSave, null, 2));
+        console.log(`✅ Successfully saved entries for ${trackName} on ${raceDate}`);
+        res.json({ success: true, message: `Entries saved: ${filePath}` });
+    } catch (error) {
+        console.error("❌ Error saving entries:", error);
+        res.status(500).json({ error: "Failed to save entries." });
+    }
 });
+
 
 // ✅ Retrieve Stored Entries & Create File If Missing
 app.get("/get-entries", (req, res) => {
