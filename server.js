@@ -77,6 +77,14 @@ app.post("/save-entries", (req, res) => {
 
     const filePath = path.join(JSON_DIR, `${trackName}_${raceDate}_entries.json`);
 
+// ✅ Ensure file exists before writing
+if (!fs.existsSync(filePath)) {
+    const emptyData = { horseEntries: {}, raceChanges: [] };
+    fs.writeFileSync(filePath, JSON.stringify(emptyData, null, 2));
+    console.log(`✅ Created new file: ${filePath}`);
+}
+
+
     const dataToSave = {
         horseEntries,
         raceChanges: raceChanges || []
