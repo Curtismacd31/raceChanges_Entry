@@ -954,9 +954,9 @@ function uploadFile() {
 
     reader.onload = function(event) {
         const fileContent = event.target.result;
-        console.log("File Content Loaded:", fileContent.substring(0, 500)); // Log first 500 chars
+        console.log("📌 File Content Loaded:", fileContent.substring(0, 500)); // Log first 500 chars
 
-        // ✅ Parse horse entries (correcting order for 103 and 201)
+        // ✅ Parse horse entries
         const horseEntries = {};
         let currentRace = null;
         let saddlePad = null;
@@ -970,42 +970,35 @@ function uploadFile() {
                 if (part.includes("<")) {
                     let keyValue = part.split("<");
 
-                    if (keyValue.length < 2) {
-                        return; // Skip if key-value format is incorrect
-                    }
+                    if (keyValue.length < 2) return;
 
                     let key = keyValue[0].trim();
                     let value = keyValue[1].trim();
 
                     if (key === "001") {
-                        // ✅ Extract the race date (ignoring first 4 chars & last 2)
-                        let rawDate = value.substring(5, value.length - 2); // Extract DD-MMM-YY format
+                        // ✅ Extract race date
+                        let rawDate = value.substring(4, value.length - 2); // Extract DD-MMM-YY format
 
-                        // ✅ Convert to YYYY-MM-DD
                         try {
-                            let dateObj = new Date(rawDate.replace(/(\d{0})-(\w{3})-(\d{4})/, "$3-$2-$1"));
+                            let dateObj = new Date(rawDate.replace(/(\d{2})-(\w{3})-(\d{2})/, "$3-$2-$1"));
                             extractedDate = dateObj.toISOString().split("T")[0]; // Format YYYY-MM-DD
                         } catch (error) {
-                            console.warn("Date parsing failed:", rawDate);
+                            console.warn("⚠ Date parsing failed:", rawDate);
                         }
                     }
 
                     if (key === "103") {
-                        // ✅ Store saddlePad BEFORE horse entry appears
                         saddlePad = value;
 
                     } else if (key === "201") {
-                        // ✅ New Race Detected
                         if (currentRace === null) {
                             currentRace = `Race ${Object.keys(horseEntries).length + 1}`;
                             horseEntries[currentRace] = [];
                         }
 
-                        // ✅ Assign the last stored saddlePad to the horse entry
                         horseEntries[currentRace].push({ saddlePad, horseName: value });
 
                     } else if (key === "999") {
-                        // ✅ End of the race
                         currentRace = null;
                         saddlePad = null;
                     }
@@ -1013,19 +1006,18 @@ function uploadFile() {
             });
         });
 
-        console.log("Extracted Horse Entries with SaddlePads:", horseEntries);
-        console.log("Extracted Date:", extractedDate);
+        console.log("✅ Extracted Horse Entries:", horseEntries);
+        console.log("✅ Extracted Date:", extractedDate);
 
-        // ✅ Set Date Field Automatically
         if (extractedDate) {
             document.getElementById("raceDate").value = extractedDate;
         }
 
-        // ✅ Send data to the backend for temporary storage
         const trackName = document.getElementById("trackName").value;
-        const raceDate = extractedDate || document.getElementById("raceDate").value; // Use extracted date if available
+        const raceDate = extractedDate || document.getElementById("raceDate").value;
 
-        fetch("http://localhost:3000/save-entries", {
+        // ✅ Send entries to backend for saving
+        fetch("https://racechanges-entry.onrender.com/save-entries", {  // Ensure full API URL
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ trackName, raceDate, horseEntries })
@@ -1033,17 +1025,18 @@ function uploadFile() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert("Entries stored successfully!");
-                window.horseEntries = horseEntries; // Store in memory for dropdown use
+                alert("✅ Entries saved successfully!");
+                window.horseEntries = horseEntries; // Store for dropdown use
             } else {
-                alert("Error storing entries.");
+                alert("❌ Error saving entries.");
             }
         })
-        .catch(error => console.error("Error storing entries:", error));
+        .catch(error => console.error("❌ Error saving entries:", error));
     };
 
     reader.readAsText(file);
 }
+
 
     </script>
 </head>
