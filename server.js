@@ -65,7 +65,7 @@ app.get("/json/:fileName", (req, res) => {
 app.use(express.json({ limit: "10mb" })); // Increase to 10MB
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-const TEMP_DIR = "./temp_entries";
+//const TEMP_DIR = "./temp_entries";
 
 // ✅ Ensure temp directory exists
 if (!fs.existsSync(TEMP_DIR)) {
