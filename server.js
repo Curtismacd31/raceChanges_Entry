@@ -40,13 +40,16 @@ app.post('/save', (req, res) => {
     });
 });
 
-// ✅ Serve JSON Files
+// ✅ Serve JSON Files (Create File If It Doesn't Exist)
 app.get("/json/:fileName", (req, res) => {
     const filePath = path.join(JSON_DIR, req.params.fileName);
 
     if (!fs.existsSync(filePath)) {
-        console.log(`❌ File not found: ${filePath}`);
-        return res.status(404).json({ error: "File not found" });
+        console.log(`❌ File not found: ${filePath} - Creating empty file.`);
+        
+        // ✅ Create an empty JSON file to prevent repeated 404 errors
+        fs.writeFileSync(filePath, JSON.stringify([])); 
+        return res.status(200).json([]); // Return an empty array
     }
 
     try {
@@ -58,6 +61,7 @@ app.get("/json/:fileName", (req, res) => {
         res.status(500).json({ error: "Error reading file" });
     }
 });
+
 
 // ✅ Save Race Entries & Changes (Now in /json folder)
 app.post("/save-entries", (req, res) => {
