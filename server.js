@@ -40,27 +40,31 @@ app.post('/save', (req, res) => {
     });
 });
 
-// ✅ Serve JSON Files (Create File If It Doesn't Exist)
-app.get("/json/:fileName", (req, res) => {
-    const filePath = path.join(JSON_DIR, req.params.fileName);
+// ✅ Retrieve Stored Entries & Create File If Missing
+app.get("/get-entries", (req, res) => {
+    const { trackName, raceDate } = req.query;
+    const filePath = path.join(JSON_DIR, `${trackName}_${raceDate}_entries.json`);
 
     if (!fs.existsSync(filePath)) {
-        console.log(`❌ File not found: ${filePath} - Creating empty file.`);
+        console.log(`❌ File not found: ${filePath} - Creating empty entries file.`);
         
-        // ✅ Create an empty JSON file to prevent repeated 404 errors
-        fs.writeFileSync(filePath, JSON.stringify([])); 
-        return res.status(200).json([]); // Return an empty array
+        // ✅ Create an empty entries file with the correct structure
+        const emptyData = { horseEntries: {}, raceChanges: [] };
+        fs.writeFileSync(filePath, JSON.stringify(emptyData, null, 2));
+        
+        return res.status(200).json(emptyData);
     }
 
     try {
         const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
-        console.log(`✅ Serving file: ${filePath}`);
+        console.log(`✅ Serving entries file: ${filePath}`);
         res.json(data);
     } catch (error) {
-        console.error(`❌ Error reading file ${filePath}:`, error);
-        res.status(500).json({ error: "Error reading file" });
+        console.error(`❌ Error reading entries file ${filePath}:`, error);
+        res.status(500).json({ error: "Error reading entries file" });
     }
 });
+
 
 
 // ✅ Save Race Entries & Changes (Now in /json folder)
