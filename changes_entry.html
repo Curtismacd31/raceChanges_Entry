@@ -1022,6 +1022,40 @@ function uploadFile() {
             });
         });
 
+	    // ✅ Step: Collect all driver names from key 601
+	const newDriverNames = new Set();
+	
+	lines.forEach(line => {
+	    let parts = line.trim().split(">");
+	    parts.forEach(part => {
+	        if (part.includes("<")) {
+	            const [key, value] = part.split("<");
+	            if (key.trim() === "601" && value.trim()) {
+	                newDriverNames.add(value.trim());
+	            }
+	        }
+	    });
+	});
+	
+	// ✅ Step: Load existing drivers.json and sync
+	if (newDriverNames.size > 0) {
+	    fetch("/json/drivers.json")
+	        .then(res => res.ok ? res.json() : [])
+	        .then(existingDrivers => {
+	            let updatedDrivers = [...new Set([...existingDrivers, ...newDriverNames])];
+	            updatedDrivers.sort((a, b) => a.localeCompare(b, "en", { sensitivity: "base" }));
+	
+	            return fetch("/save", {
+	                method: "POST",
+	                headers: { "Content-Type": "application/json" },
+	                body: JSON.stringify({ fileName: "drivers.json", data: updatedDrivers })
+	            });
+	        })
+	        .then(() => console.log("✅ Drivers synced from race file."))
+	        .catch(err => console.error("❌ Error syncing drivers:", err));
+	}
+
+
         console.log("Extracted Horse Entries with SaddlePads:", horseEntries);
         console.log("Extracted Date:", extractedDate);
 
