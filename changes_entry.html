@@ -1086,6 +1086,20 @@ function uploadFile() {
     reader.readAsText(file);
 }
 
+	    document.addEventListener("DOMContentLoaded", function () {
+    const loginButton = document.getElementById("loginBtn");
+    const loginBox = document.getElementById("loginBox");
+
+    if (loginButton) {
+        loginButton.addEventListener("click", function () {
+            loginBox.classList.remove("hidden");
+        });
+    }
+
+    // ✅ Add all your other DOM-related code inside here
+});
+
+
     </script>
 </head>
 <body>
