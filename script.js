@@ -310,9 +310,16 @@
 
 			// ✅ Sorting logic
 			data.sort((a, b) => {
-				if (a.raceNumber !== b.raceNumber) return a.raceNumber - b.raceNumber;
-				return a.saddlePad - b.saddlePad;
+			  const raceA = parseInt(a.raceNumber.replace(/\D/g, ""), 10);
+			  const raceB = parseInt(b.raceNumber.replace(/\D/g, ""), 10);
+			
+			  if (raceA !== raceB) return raceA - raceB;
+			
+			  const padA = parseInt(a.saddlePad, 10);
+			  const padB = parseInt(b.saddlePad, 10);
+			  return padA - padB;
 			});
+
 
 			// Table Headers
 			doc.setFontSize(10);
