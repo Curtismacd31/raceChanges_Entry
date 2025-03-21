@@ -873,22 +873,30 @@ function filterDrivers(searchTerm, drivers) {
 
 
 function saveDriverSelection() {
-    let selectedDriver = document.getElementById("driverList").value;
-    let newDriver = document.getElementById("newDriver").value.trim();
+    const input = document.getElementById("newDriver");
+    const list = document.getElementById("driverList");
 
-    let finalDriver = newDriver !== "" ? newDriver : selectedDriver;
+    let typedValue = input.value.trim();
+    let selectedValue = list.value.trim();
+
+    // ✅ If user typed but didn't select, and typedValue matches an option, use full match
+    let matchedOption = [...list.options].find(opt => 
+        opt.textContent.toLowerCase().startsWith(typedValue.toLowerCase())
+    );
+
+    let finalDriver = matchedOption ? matchedOption.value : typedValue;
 
     if (currentChangeTextField) {
-        currentChangeTextField.value = finalDriver; // Update the Change Text field
+        currentChangeTextField.value = finalDriver;
     }
 
-    // ✅ Fetch existing drivers, add the new one (if not exists), then sort alphabetically
+    // ✅ Save new driver if not already in list
     fetch("/json/drivers.json")
-        .then(response => response.ok ? response.json() : [])
+        .then(res => res.ok ? res.json() : [])
         .then(drivers => {
             if (!drivers.includes(finalDriver)) {
                 drivers.push(finalDriver);
-                drivers.sort((a, b) => a.localeCompare(b, "en", { sensitivity: "base" })); // Case-insensitive sorting
+                drivers.sort((a, b) => a.localeCompare(b, "en", { sensitivity: "base" }));
 
                 return fetch("/save", {
                     method: "POST",
@@ -901,6 +909,7 @@ function saveDriverSelection() {
 
     closePopup();
 }
+
 
 
 function closePopup() {
