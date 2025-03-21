@@ -127,42 +127,40 @@
 		let selectedEquipmentChanges = []; // Array to hold selected changes
 		let currentChangeTextField = null;  // Store reference to change text field
 		
-        const judgesMapping = {
-            "Judges1": "Charlottetown",
-            "Judges2": "Summerside",
-            "Judges3": "Inverness",
-            "Judges4": "Northside Downs",
-            "Judges5": "Truro",
-            "Judges6": "Woodstock",
-            "Judges7": "TheLoop",
-			"Grvr1": "Grand River"
-        };
-        
-        function validateLogin() {
-				const password = document.getElementById("passwordInput").value;
-				const trackDropdown = document.getElementById("trackName");
+	function validateLogin() {
+	    const password = document.getElementById("passwordInput").value;
+	
+	    fetch("/validate-login", {
+	        method: "POST",
+	        headers: { "Content-Type": "application/json" },
+	        body: JSON.stringify({ code: password })
+	    })
+	    .then(res => res.json())
+	    .then(data => {
+	        if (data.success) {
+	            document.getElementById("loginPage").classList.add("hidden");
+	            document.getElementById("mainContent").classList.remove("hidden");
+	
+	            // ✅ Dynamically load track options
+	            const trackDropdown = document.getElementById("trackName");
+	            trackDropdown.innerHTML = ""; // Clear previous
+	            data.trackOptions.forEach(track => {
+	                const option = document.createElement("option");
+	                option.value = track;
+	                option.textContent = track;
+	                trackDropdown.appendChild(option);
+	            });
+	
+	        } else {
+	            alert("Invalid Judges Number.");
+	        }
+	    })
+	    .catch(err => {
+	        console.error("Login failed:", err);
+	        alert("Login check failed. Try again.");
+	    });
+	}
 
-				if (judgesMapping[password]) {
-					trackDropdown.innerHTML = ""; // Clear previous options
-
-					if (password === "Judges1") {
-						// ✅ If Judges1 logs in, show two options
-						trackDropdown.innerHTML = `
-							<option value="Charlottetown - Afternoon">Charlottetown - Afternoon</option>
-							<option value="Charlottetown - Evening">Charlottetown - Evening</option>
-						`;
-					} else {
-						// ✅ Default behavior for all other judges
-						trackDropdown.innerHTML = `<option value="${judgesMapping[password]}">${judgesMapping[password]}</option>`;
-					}
-
-					// Hide login, show race changes page
-					document.getElementById("loginPage").classList.add("hidden");
-					document.getElementById("raceChangesPage").classList.remove("hidden");
-				} else {
-					alert("Invalid Judges Number");
-				}
-			}
 
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//CHECK FOR EXISTING FILE
