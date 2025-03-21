@@ -168,6 +168,37 @@
         </table>
     </div>
 
+	<!-- Driver Selection Popup -->
+	<div id="driverPopup" class="popup hidden">
+		<h3>Select a Driver</h3>
+		<select id="driverList"></select>
+		<input type="text" id="newDriver" placeholder="Enter new driver if not listed">
+		<button onclick="saveDriverSelection()">Save</button>
+		<button onclick="closePopup()">Cancel</button>
+	</div>
+	
+	<!-- Equipment Change Popup -->
+	<div id="equipmentPopup" class="popup hidden">
+		<h3>Select Equipment Change(s)</h3>
+
+		<!-- Equipment dropdown -->
+		<select id="equipmentList"></select>
+
+		<!-- Input field for new equipment changes -->
+		<input type="text" id="newEquipment" placeholder="Enter new equipment change">
+
+		<!-- Button to add the selected change -->
+		<button onclick="addEquipmentChange()">Add Equipment Change</button>
+		<button onclick="removeLastEquipmentChange()">Remove Last Change</button>
+
+		<!-- Text area to show selected changes -->
+		<textarea id="equipmentPreview" readonly></textarea>
+
+		<!-- Save & Cancel Buttons -->
+		<button onclick="saveEquipmentChanges()">Save</button>
+		<button onclick="closeEquipmentPopup()">Cancel</button>
+	</div>
+	
     <!-- Load Data Tab -->
     <div class="container hidden tab" id="loadDataTab">
         <h2>Load Entry File</h2>
