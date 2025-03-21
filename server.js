@@ -122,19 +122,24 @@ app.get("/get-entries", (req, res) => {
 // ✅ Validate Login
 app.post("/validate-login", (req, res) => {
     const { code } = req.body;
+    console.log("🔑 Login attempt with code:", code);
 
     const judgeFile = path.join(JSON_DIR, "judges.json");
     if (!fs.existsSync(judgeFile)) {
+        console.log("❌ Judge file not found:", judgeFile);
         return res.status(500).json({ error: "Judge list not found." });
     }
 
     const judgeData = JSON.parse(fs.readFileSync(judgeFile, "utf8"));
     if (judgeData[code]) {
+        console.log(`✅ Judge code valid: ${code}`);
         return res.json({ success: true, trackOptions: judgeData[code].trackOptions });
     } else {
+        console.log(`❌ Invalid judge code: ${code}`);
         return res.status(401).json({ success: false, message: "Invalid code." });
     }
 });
+
 
 // ✅ Test Server Endpoint
 app.get("/status", (req, res) => {
