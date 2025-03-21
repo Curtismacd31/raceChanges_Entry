@@ -230,35 +230,38 @@
 			console.log("✅ Dropdowns updated with race entries.");
 		}
 		
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////
-		//CHECK ENTRIES
-		document.getElementById("raceDate").addEventListener("change", function () {
-			let selectedDate = this.value;
-			let trackName = document.getElementById("trackName").value;
-
-			if (!selectedDate || !trackName) return;
-
-			console.log("📌 Checking for existing entries:", trackName, selectedDate);
-
-			fetch(`/get-entries?trackName=${trackName}&raceDate=${selectedDate}`)
-				.then(response => response.json())
-				.then(data => {
-					console.log("📌 Received JSON Response:", data);
-
-					if (data.horseEntries) {
-						console.log("✅ Auto-loading horse entries...");
-						window.horseEntries = data.horseEntries;  // ✅ Store horse entries globally
-					}
-
-					if (data.raceChanges && data.raceChanges.length > 0) {
-						console.log("✅ Found existing race changes:", data.raceChanges);
-						loadExistingRaceChanges(data.raceChanges);
-					} else {
-						console.log("❌ No race changes found.");
-					}
-				})
-				.catch(error => console.log("❌ No stored entries found for selected date.", error));
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// CHECK ENTRIES
+		document.addEventListener("DOMContentLoaded", function () {
+			document.getElementById("raceDate")?.addEventListener("change", function () {
+				let selectedDate = this.value;
+				let trackName = document.getElementById("trackName").value;
+		
+				if (!selectedDate || !trackName) return;
+		
+				console.log("📌 Checking for existing entries:", trackName, selectedDate);
+		
+				fetch(`/get-entries?trackName=${trackName}&raceDate=${selectedDate}`)
+					.then(response => response.json())
+					.then(data => {
+						console.log("📌 Received JSON Response:", data);
+		
+						if (data.horseEntries) {
+							console.log("✅ Auto-loading horse entries...");
+							window.horseEntries = data.horseEntries; // ✅ Store horse entries globally
+						}
+		
+						if (data.raceChanges && data.raceChanges.length > 0) {
+							console.log("✅ Found existing race changes:", data.raceChanges);
+							loadExistingRaceChanges(data.raceChanges);
+						} else {
+							console.log("❌ No race changes found.");
+						}
+					})
+					.catch(error => console.log("❌ No stored entries found for selected date.", error));
+			});
 		});
+
 
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1087,20 +1090,6 @@ function uploadFile() {
 
     reader.readAsText(file);
 }
-
-	    document.addEventListener("DOMContentLoaded", function () {
-    const loginButton = document.getElementById("loginBtn");
-    const loginBox = document.getElementById("loginBox");
-
-    if (loginButton) {
-        loginButton.addEventListener("click", function () {
-            loginBox.classList.remove("hidden");
-        });
-    }
-
-    // ✅ Add all your other DOM-related code inside here
-});
-
 
     </script>
 </head>
