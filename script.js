@@ -785,42 +785,50 @@ function filterDrivers(searchTerm, drivers) {
 
 
 function saveDriverSelection() {
-    const input = document.getElementById("newDriver");
-    const list = document.getElementById("driverList");
+	const input = document.getElementById("newDriver");
+	const list = document.getElementById("driverList");
 
-    let typedValue = input.value.trim();
-    let selectedValue = list.value.trim();
+	let selectedValue = list.value.trim();
+	let typedValue = input.value.trim();
 
-    // ✅ If user typed but didn't select, and typedValue matches an option, use full match
-    let matchedOption = [...list.options].find(opt => 
-        opt.textContent.toLowerCase().startsWith(typedValue.toLowerCase())
-    );
+	let finalDriver = "";
 
-    let finalDriver = matchedOption ? matchedOption.value : typedValue;
+	// ✅ Prefer dropdown selection if it's changed
+	if (selectedValue && selectedValue !== "New: " + typedValue) {
+		finalDriver = selectedValue;
+	} else if (typedValue) {
+		finalDriver = typedValue;
+	}
 
-    if (currentChangeTextField) {
-        currentChangeTextField.value = finalDriver;
-    }
+	if (!finalDriver) {
+		alert("Please enter or select a driver name.");
+		return;
+	}
 
-    // ✅ Save new driver if not already in list
-    fetch("/json/drivers.json")
-        .then(res => res.ok ? res.json() : [])
-        .then(drivers => {
-            if (!drivers.includes(finalDriver)) {
-                drivers.push(finalDriver);
-                drivers.sort((a, b) => a.localeCompare(b, "en", { sensitivity: "base" }));
+	if (currentChangeTextField) {
+		currentChangeTextField.value = finalDriver;
+	}
 
-                return fetch("/save", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ fileName: "drivers.json", data: drivers })
-                });
-            }
-        })
-        .catch(error => console.error("Error saving new driver:", error));
+	// ✅ Save new driver if not already in list
+	fetch("/json/drivers.json")
+		.then(res => res.ok ? res.json() : [])
+		.then(drivers => {
+			if (!drivers.includes(finalDriver)) {
+				drivers.push(finalDriver);
+				drivers.sort((a, b) => a.localeCompare(b, "en", { sensitivity: "base" }));
 
-    closePopup();
+				return fetch("/save", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ fileName: "drivers.json", data: drivers })
+				});
+			}
+		})
+		.catch(error => console.error("Error saving new driver:", error));
+
+	closePopup();
 }
+
 
 
 
