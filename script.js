@@ -3,6 +3,8 @@
 		let currentChangeTextField = null;  // Store reference to change text field
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//VALIDATE LOGIN
+	document.addEventListener("DOMContentLoaded", function () {
+	// VALIDATE LOGIN
 	function validateLogin() {
 		const password = document.getElementById("passwordInput").value;
 	
@@ -41,6 +43,12 @@
 			alert("Login check failed. Try again.");
 		});
 	}
+
+
+	// Expose globally if needed
+	window.validateLogin = validateLogin;
+});
+
 
 
 
