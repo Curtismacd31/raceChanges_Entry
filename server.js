@@ -31,10 +31,22 @@ app.post('/save', (req, res) => {
         return res.status(400).json({ error: "Missing fileName or data" });
     }
 
-    const filePath = path.join(JSON_DIR, fileName);
-
-    try {
-        fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+            const filePath = path.join(JSON_DIR, fileName);
+        
+            try {
+                const sortedData = Array.isArray(data)
+          ? data.sort((a, b) => {
+              const raceA = parseInt(a.raceNumber?.replace(/\D/g, "") || 0, 10);
+              const raceB = parseInt(b.raceNumber?.replace(/\D/g, "") || 0, 10);
+              if (raceA !== raceB) return raceA - raceB;
+        
+              const padA = parseInt(a.saddlePad || 0, 10);
+              const padB = parseInt(b.saddlePad || 0, 10);
+              return padA - padB;
+            })
+          : data;
+        
+        fs.writeFileSync(filePath, JSON.stringify(sortedData, null, 2));
         console.log(`✅ File saved: ${filePath}`);
         res.json({ success: true, message: `File saved: ${fileName}` });
     } catch (error) {
@@ -82,10 +94,23 @@ app.post("/save-entries", (req, res) => {
 
     const filePath = path.join(JSON_DIR, `${trackName}_${raceDate}_entries.json`);
 
+    const sortedChanges = Array.isArray(raceChanges)
+      ? raceChanges.sort((a, b) => {
+          const raceA = parseInt(a.raceNumber?.replace(/\D/g, "") || 0, 10);
+          const raceB = parseInt(b.raceNumber?.replace(/\D/g, "") || 0, 10);
+          if (raceA !== raceB) return raceA - raceB;
+    
+          const padA = parseInt(a.saddlePad || 0, 10);
+          const padB = parseInt(b.saddlePad || 0, 10);
+          return padA - padB;
+        })
+      : [];
+    
     const dataToSave = {
         horseEntries: horseEntries || {},
-        raceChanges: raceChanges || []
+        raceChanges: sortedChanges
     };
+
 
     try {
         fs.writeFileSync(filePath, JSON.stringify(dataToSave, null, 2));
