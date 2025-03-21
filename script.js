@@ -1,68 +1,75 @@
 		let currentEquipmentField = null; // Store reference to Change Text field
 		let selectedEquipmentChanges = []; // Array to hold selected changes
 		let currentChangeTextField = null;  // Store reference to change text field
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////
-	//VALIDATE LOGIN
-	document.addEventListener("DOMContentLoaded", function () {
-	// VALIDATE LOGIN
-	function validateLogin() {
-		const password = document.getElementById("passwordInput").value;
 	
-		fetch("/validate-login", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ code: password })
-		})
-		.then(async res => {
-			if (!res.ok) {
-				const errorText = await res.text();
-				throw new Error(`Server responded with ${res.status}: ${errorText}`);
-			}
-			return res.json();
-		})
-		.then(data => {
-			if (data.success) {
-				console.log("✅ Login successful");
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// VALIDATE LOGIN
+		document.addEventListener("DOMContentLoaded", function () {
+			function validateLogin() {
+				const password = document.getElementById("passwordInput").value;
 		
-				const loginPage = document.getElementById("loginPage");
-				const mainContent = document.getElementById("raceChangesPage");
+				fetch("/validate-login", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ code: password })
+				})
+					.then(async res => {
+						if (!res.ok) {
+							const errorText = await res.text();
+							throw new Error(`Server responded with ${res.status}: ${errorText}`);
+						}
+						return res.json();
+					})
+					.then(data => {
+						if (data.success) {
+							console.log("✅ Login successful");
 		
-				if (loginPage && mainContent) {
-					loginPage.classList.add("hidden");
-					mainContent.classList.remove("hidden");
-				} else {
-					console.warn("❗ loginPage or mainContent not found in DOM.");
-				}
+							// Hide login, show tabs
+							const loginPage = document.getElementById("loginPage");
+							const tabs = document.getElementById("tabs");
+							const raceChangesTab = document.getElementById("raceChangesTab");
 		
-				const trackDropdown = document.getElementById("trackName");
-				if (trackDropdown) {
-					trackDropdown.innerHTML = "";
-					data.trackOptions.forEach(track => {
-						const option = document.createElement("option");
-						option.value = track;
-						option.textContent = track;
-						trackDropdown.appendChild(option);
+							if (loginPage && tabs && raceChangesTab) {
+								loginPage.classList.add("hidden");
+								tabs.classList.remove("hidden");
+								showTab("raceChangesTab"); // Show Main tab after login
+							} else {
+								console.warn("❗ Login or tab containers not found.");
+							}
+		
+							// Populate track dropdown
+							const trackDropdown = document.getElementById("trackName");
+							if (trackDropdown) {
+								trackDropdown.innerHTML = "";
+								data.trackOptions.forEach(track => {
+									const option = document.createElement("option");
+									option.value = track;
+									option.textContent = track;
+									trackDropdown.appendChild(option);
+								});
+							}
+						} else {
+							alert("Invalid Judges Number.");
+						}
+					})
+					.catch(err => {
+						console.error("Login check failed. Try again.", err);
+						alert("Login check failed. Try again.");
 					});
-				}
-			} else {
-				alert("Invalid Judges Number.");
 			}
-		})
-
-		.catch(err => {
-			console.error("Login check failed. Try again.", err);
-			alert("Login check failed. Try again.");
+		
+			window.validateLogin = validateLogin;
 		});
-	}
-
-
-	// Expose globally if needed
-	window.validateLogin = validateLogin;
-});
-
-
-
-
+	
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//HELPER FUNCTION
+		function showTab(tabId) {
+			document.querySelectorAll('.tab').forEach(tab => tab.classList.add('hidden'));
+			const activeTab = document.getElementById(tabId);
+			if (activeTab) {
+				activeTab.classList.remove('hidden');
+			}
+		}
 
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//CHECK FOR EXISTING FILE
