@@ -240,7 +240,7 @@
 
 			console.log("📌 Checking for existing entries:", trackName, selectedDate);
 
-			fetch(`http://localhost:3000/get-entries?trackName=${trackName}&raceDate=${selectedDate}`)
+			fetch(`http://68.183.201.181:3000/get-entries?trackName=${trackName}&raceDate=${selectedDate}`)
 				.then(response => response.json())
 				.then(data => {
 					console.log("📌 Received JSON Response:", data);
@@ -1025,7 +1025,7 @@ function uploadFile() {
         const trackName = document.getElementById("trackName").value;
         const raceDate = extractedDate || document.getElementById("raceDate").value; // Use extracted date if available
 
-        fetch("http://localhost:3000/save-entries", {
+        fetch("http://68.183.201.181:3000/save-entries", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ trackName, raceDate, horseEntries })
