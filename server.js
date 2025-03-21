@@ -25,11 +25,22 @@ if (!fs.existsSync(JSON_DIR)) {
 
 // ✅ Save JSON Files (Changes & Entries)
 app.post('/save', (req, res) => {
-    const { fileName, data } = req.body;
+        const { fileName, data, trackCondition, weather, variant } = req.body;
+        
+        if (!fileName || !data) {
+            return res.status(400).json({ error: "Missing fileName or data" });
+        }
+        
+        // Combine into one object if data is an array (i.e., race changes)
+        const finalData = Array.isArray(data)
+          ? {
+              trackCondition: trackCondition || "",
+              weather: weather || "",
+              variant: variant || "",
+              changes: data
+            }
+          : data;
 
-    if (!fileName || !data) {
-        return res.status(400).json({ error: "Missing fileName or data" });
-    }
 
             const filePath = path.join(JSON_DIR, fileName);
         
