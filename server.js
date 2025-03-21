@@ -119,6 +119,25 @@ app.get("/get-entries", (req, res) => {
     }
 });
 
+
+// VALIDATE LOGIN
+app.post("/validate-login", (req, res) => {
+    const { code } = req.body;
+
+    const judgeFile = path.join(JSON_DIR, "judges.json");
+    if (!fs.existsSync(judgeFile)) {
+        return res.status(500).json({ error: "Judge list not found." });
+    }
+
+    const judgeData = JSON.parse(fs.readFileSync(judgeFile, "utf8"));
+    if (judgeData[code]) {
+        return res.json({ success: true, trackOptions: judgeData[code].trackOptions });
+    } else {
+        return res.status(401).json({ success: false, message: "Invalid code." });
+    }
+});
+
+
 // ✅ Status endpoint
 app.get("/status", (req, res) => {
     res.json({ success: true, message: "Server is running." });
