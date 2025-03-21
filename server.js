@@ -25,39 +25,40 @@ if (!fs.existsSync(JSON_DIR)) {
 
 // ✅ Save JSON Files (Changes & Entries)
 app.post('/save', (req, res) => {
-        const { fileName, data, trackCondition, weather, variant } = req.body;
-        
-        if (!fileName || !data) {
-            return res.status(400).json({ error: "Missing fileName or data" });
-        }
-        
-        // Combine into one object if data is an array (i.e., race changes)
-        const finalData = Array.isArray(data)
-          ? {
-              trackCondition: trackCondition || "",
-              weather: weather || "",
-              variant: variant || "",
-              changes: data
-            }
-          : data;
+    const { fileName, data, trackCondition, weather, variant } = req.body;
 
+    if (!fileName || !data) {
+        return res.status(400).json({ error: "Missing fileName or data" });
+    }
 
-            const filePath = path.join(JSON_DIR, fileName);
-        
-            try {
-                const sortedData = Array.isArray(finalData)
-          ? data.sort((a, b) => {
-              const raceA = parseInt(a.raceNumber?.replace(/\D/g, "") || 0, 10);
-              const raceB = parseInt(b.raceNumber?.replace(/\D/g, "") || 0, 10);
-              if (raceA !== raceB) return raceA - raceB;
-        
-              const padA = parseInt(a.saddlePad || 0, 10);
-              const padB = parseInt(b.saddlePad || 0, 10);
-              return padA - padB;
-            })
-          : data;
-        
-        fs.writeFileSync(filePath, JSON.stringify(sortedData, null, 2));
+    let finalData;
+
+    // If it's an array (race changes), wrap it with metadata and sort
+    if (Array.isArray(data)) {
+        const sortedChanges = data.sort((a, b) => {
+            const raceA = parseInt(a.raceNumber?.replace(/\D/g, "") || 0, 10);
+            const raceB = parseInt(b.raceNumber?.replace(/\D/g, "") || 0, 10);
+            if (raceA !== raceB) return raceA - raceB;
+
+            const padA = parseInt(a.saddlePad || 0, 10);
+            const padB = parseInt(b.saddlePad || 0, 10);
+            return padA - padB;
+        });
+
+        finalData = {
+            trackCondition: trackCondition || "",
+            weather: weather || "",
+            variant: variant || "",
+            changes: sortedChanges
+        };
+    } else {
+        finalData = data;
+    }
+
+    const filePath = path.join(JSON_DIR, fileName);
+
+    try {
+        fs.writeFileSync(filePath, JSON.stringify(finalData, null, 2));
         console.log(`✅ File saved: ${filePath}`);
         res.json({ success: true, message: `File saved: ${fileName}` });
     } catch (error) {
@@ -65,6 +66,7 @@ app.post('/save', (req, res) => {
         res.status(500).json({ error: "Failed to save file." });
     }
 });
+
 
 // ✅ Serve JSON Files
 app.get("/json/:fileName", (req, res) => {
