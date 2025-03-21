@@ -3,6 +3,17 @@ const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
 
+const path = require('path');
+
+// Serve static files from current directory (or use a subfolder like /public)
+app.use(express.static(path.join(__dirname)));
+
+// Redirect / to changes_entry.html
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'changes_entry.html'));
+});
+
+
 const JSON_DIR = path.join(__dirname, "json");
 
 // ✅ Ensure JSON directory exists
