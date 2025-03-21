@@ -77,36 +77,35 @@
 			const trackName = document.getElementById("trackName").value;
 			const raceDate = document.getElementById("raceDate").value;
 			if (!trackName || !raceDate) return;
-
+		
 			const changesFile = `${trackName}_${raceDate}_changes.json`;
 			const entriesFile = `${trackName}_${raceDate}_entries.json`;
-
+		
 			console.log("📌 Checking for existing files:", changesFile, entriesFile);
-			
-			
-			// ✅ Load Entries File
+		
+			// ✅ Step 1: Load Entries First
 			fetch(`/json/${entriesFile}`)
 				.then(response => response.ok ? response.json() : Promise.reject("Entries file not found"))
 				.then(entries => {
 					console.log("📌 Received Race Entries:", entries);
 					if (entries.horseEntries) {
-						window.horseEntries = entries.horseEntries; // ✅ Store entries globally
+						window.horseEntries = entries.horseEntries;
 						console.log("✅ Race entries loaded into memory:", window.horseEntries);
-						updateAllDropdowns(); // ✅ Refresh UI dropdowns
+						updateAllDropdowns();
 					}
 				})
-				.catch(error => console.log("❌ No entries file found:", error));
-
-			// ✅ Load Changes File
-			fetch(`/json/${changesFile}`)
+				.then(() => {
+					// ✅ Step 2: THEN Load Changes File
+					return fetch(`/json/${changesFile}`);
+				})
 				.then(response => response.ok ? response.json() : Promise.reject("Changes file not found"))
 				.then(data => {
 					console.log("📌 Received Changes Data:", data);
 					if (Array.isArray(data.changes) && data.changes.length > 0) {
 						console.log("✅ Loading existing race changes...");
 						loadExistingData(data.changes);
-					
-						// ✅ Also restore metadata fields (if present)
+		
+						// Restore metadata
 						document.getElementById("trackCondition").value = data.trackCondition || "";
 						document.getElementById("weather").value = data.weather || "";
 						document.getElementById("variant").value = data.variant || "";
@@ -114,9 +113,11 @@
 						console.warn("⚠ No valid race changes found in file.");
 					}
 				})
-				.catch(error => console.log("❌ No changes file found:", error));
-
+				.catch(error => {
+					console.log("❌ Error checking files:", error);
+				});
 		}
+
 
 
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////
