@@ -1037,7 +1037,7 @@ function uploadFile() {
 
 
         // ✅ Send entries to backend for saving
-        fetch("https://racechanges-entry.onrender.com/save-entries", {  // Ensure full API URL
+        fetch("https://68.183.201.181:3000/save-entries", {  // Ensure full API URL
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ trackName, raceDate, horseEntries })
