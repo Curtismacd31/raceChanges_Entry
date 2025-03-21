@@ -230,7 +230,7 @@
 			.then(result => {
 				console.log("✅ Save successful:", result);
 				//alert(result);
-				alert("CHANGES SAVED FOR " + ${trackName} + " " + ${raceDate})
+				alert(`CHANGES SAVED FOR ${trackName} ${raceDate}`);
 			})
 			.catch(error => console.error('❌ Error saving data:', error));
 		}
