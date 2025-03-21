@@ -102,9 +102,14 @@
 				.then(response => response.ok ? response.json() : Promise.reject("Changes file not found"))
 				.then(data => {
 					console.log("📌 Received Changes Data:", data);
-					if (Array.isArray(data) && data.length > 0) {
+					if (Array.isArray(data.changes) && data.changes.length > 0) {
 						console.log("✅ Loading existing race changes...");
-						loadExistingData(data); // ✅ Ensure we pass the correct data format
+						loadExistingData(data.changes);
+					
+						// ✅ Also restore metadata fields (if present)
+						document.getElementById("trackCondition").value = data.trackCondition || "";
+						document.getElementById("weather").value = data.weather || "";
+						document.getElementById("variant").value = data.variant || "";
 					} else {
 						console.warn("⚠ No valid race changes found in file.");
 					}
