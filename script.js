@@ -398,6 +398,7 @@
 			}
 
 			doc.save(`Race_Changes_${trackName}_${raceDate}.pdf`);
+			saveData();
 		}
 
 
