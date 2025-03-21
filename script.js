@@ -25,7 +25,7 @@
 				console.log("✅ Login successful");
 		
 				const loginPage = document.getElementById("loginPage");
-				const mainContent = document.getElementById("mainContent");
+				const mainContent = document.getElementById("raceChangesPage");
 		
 				if (loginPage && mainContent) {
 					loginPage.classList.add("hidden");
