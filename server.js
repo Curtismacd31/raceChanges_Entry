@@ -3,18 +3,14 @@ const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
 
-const path = require('path');
-
-// Serve static files from current directory (or use a subfolder like /public)
-app.use(express.static(path.join(__dirname)));
-
-// Redirect / to changes_entry.html
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'changes_entry.html'));
-});
-
-
+const app = express();
 const JSON_DIR = path.join(__dirname, "json");
+
+// ✅ Middleware
+app.use(cors());
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(express.static(__dirname));
 
 // ✅ Ensure JSON directory exists
 if (!fs.existsSync(JSON_DIR)) {
@@ -22,11 +18,10 @@ if (!fs.existsSync(JSON_DIR)) {
     console.log("✅ JSON directory created.");
 }
 
-const app = express();
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-app.use(cors());
-app.use(express.static(__dirname)); // ✅ Serve static files
+// ✅ Serve home page
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'changes_entry.html'));
+});
 
 // ✅ Save JSON Files (Changes & Entries)
 app.post('/save', (req, res) => {
@@ -48,7 +43,7 @@ app.post('/save', (req, res) => {
     }
 });
 
-// ✅ Serve JSON Files (Check if file exists)
+// ✅ Serve JSON Files
 app.get("/json/:fileName", (req, res) => {
     const filePath = path.join(JSON_DIR, req.params.fileName);
 
@@ -76,25 +71,16 @@ app.post("/save-entries", (req, res) => {
         return res.status(400).json({ error: "Missing required fields." });
     }
 
-    // ✅ Ensure proper date format
     try {
         const dateObj = new Date(raceDate);
-        if (isNaN(dateObj)) {
-            throw new Error("Invalid date");
-        }
-        raceDate = dateObj.toISOString().split("T")[0]; // Ensure proper format YYYY-MM-DD
+        if (isNaN(dateObj)) throw new Error("Invalid date");
+        raceDate = dateObj.toISOString().split("T")[0];
     } catch (error) {
         console.error("❌ Date parsing failed:", raceDate);
         return res.status(400).json({ error: "Invalid date format." });
     }
 
     const filePath = path.join(JSON_DIR, `${trackName}_${raceDate}_entries.json`);
-
-    // ✅ Ensure directory and file exist
-    if (!fs.existsSync(JSON_DIR)) {
-        fs.mkdirSync(JSON_DIR, { recursive: true });
-        console.log("✅ Created JSON directory.");
-    }
 
     const dataToSave = {
         horseEntries: horseEntries || {},
@@ -133,7 +119,7 @@ app.get("/get-entries", (req, res) => {
     }
 });
 
-// ✅ Test Route to Verify Server is Running
+// ✅ Status endpoint
 app.get("/status", (req, res) => {
     res.json({ success: true, message: "Server is running." });
 });
