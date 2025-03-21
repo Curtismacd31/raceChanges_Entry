@@ -23,21 +23,32 @@
 		.then(data => {
 			if (data.success) {
 				console.log("✅ Login successful");
-				document.getElementById("loginPage").classList.add("hidden");
-				document.getElementById("mainContent").classList.remove("hidden");
-	
+		
+				const loginPage = document.getElementById("loginPage");
+				const mainContent = document.getElementById("mainContent");
+		
+				if (loginPage && mainContent) {
+					loginPage.classList.add("hidden");
+					mainContent.classList.remove("hidden");
+				} else {
+					console.warn("❗ loginPage or mainContent not found in DOM.");
+				}
+		
 				const trackDropdown = document.getElementById("trackName");
-				trackDropdown.innerHTML = "";
-				data.trackOptions.forEach(track => {
-					const option = document.createElement("option");
-					option.value = track;
-					option.textContent = track;
-					trackDropdown.appendChild(option);
-				});
+				if (trackDropdown) {
+					trackDropdown.innerHTML = "";
+					data.trackOptions.forEach(track => {
+						const option = document.createElement("option");
+						option.value = track;
+						option.textContent = track;
+						trackDropdown.appendChild(option);
+					});
+				}
 			} else {
 				alert("Invalid Judges Number.");
 			}
 		})
+
 		.catch(err => {
 			console.error("Login check failed. Try again.", err);
 			alert("Login check failed. Try again.");
