@@ -45,7 +45,7 @@ app.post('/save', (req, res) => {
             const filePath = path.join(JSON_DIR, fileName);
         
             try {
-                const sortedData = Array.isArray(data)
+                const sortedData = Array.isArray(finalData)
           ? data.sort((a, b) => {
               const raceA = parseInt(a.raceNumber?.replace(/\D/g, "") || 0, 10);
               const raceB = parseInt(b.raceNumber?.replace(/\D/g, "") || 0, 10);
