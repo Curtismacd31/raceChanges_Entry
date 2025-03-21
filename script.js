@@ -227,11 +227,20 @@
 			});
 
 			const fileName = `${trackName}_${raceDate}_changes.json`;
+			const trackCondition = document.getElementById("trackCondition").value;
+			const weather = document.getElementById("weather").value;
+			const variant = document.getElementById("variant").value;
 
 			fetch('/save', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ fileName, data })
+			  method: 'POST',
+			  headers: { 'Content-Type': 'application/json' },
+			  body: JSON.stringify({
+			    fileName,
+			    data,
+			    trackCondition,
+			    weather,
+			    variant
+			  })
 			})
 			.then(response => response.text())
 			.then(result => {
