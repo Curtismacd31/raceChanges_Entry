@@ -155,23 +155,26 @@
 				console.log("📌 Checking for existing entries:", trackName, selectedDate);
 		
 				fetch(`/get-entries?trackName=${trackName}&raceDate=${selectedDate}`)
-					.then(response => response.json())
-					.then(data => {
-						console.log("📌 Received JSON Response:", data);
-		
-						if (data.horseEntries) {
-							console.log("✅ Auto-loading horse entries...");
-							window.horseEntries = data.horseEntries; // ✅ Store horse entries globally
-						}
-		
-						if (data.raceChanges && data.raceChanges.length > 0) {
-							console.log("✅ Found existing race changes:", data.raceChanges);
-							loadExistingRaceChanges(data.raceChanges);
-						} else {
-							console.log("❌ No race changes found.");
-						}
-					})
-					.catch(async (error) => {
+					    .then(response => {
+					        if (!response.ok) {
+					            throw new Error("No entries file found");
+					        }
+					        return response.json();
+					    })
+					    .then(data => {
+					        console.log("📌 Received JSON Response:", data);
+					        if (data.horseEntries) {
+					            console.log("✅ Auto-loading horse entries...");
+					            window.horseEntries = data.horseEntries;
+					        }
+					        if (data.raceChanges && data.raceChanges.length > 0) {
+					            console.log("✅ Found existing race changes:", data.raceChanges);
+					            loadExistingRaceChanges(data.raceChanges);
+					        } else {
+					            console.log("❌ No race changes found.");
+					        }
+					    })
+					    .catch(async (error) => {
 					        console.warn("⚠", error.message);
 					
 					        if (confirm("No file loaded for today. Would you like to start with a blank file?")) {
@@ -210,6 +213,7 @@
 					            }
 					        }
 					    });
+
 			});
 		});
 
