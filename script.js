@@ -60,6 +60,28 @@
 		
 			window.validateLogin = validateLogin;
 		});
+
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//SET WEATHER FROM TRACK NAME
+		document.getElementById("trackName").addEventListener("change", function () {
+		    const track = this.value;
+		    if (!track) return;
+		
+		    fetch(`/get-weather?track=${encodeURIComponent(track)}`)
+		        .then(res => res.json())
+		        .then(data => {
+		            if (data.weather) {
+		                document.getElementById("weather").value = data.weather;
+		                console.log("✅ Weather updated:", data.weather);
+		            } else {
+		                console.warn("⚠ Weather data not found:", data);
+		            }
+		        })
+		        .catch(err => {
+		            console.error("❌ Weather fetch failed:", err);
+		        });
+		});
+
 	
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//HELPER FUNCTION
