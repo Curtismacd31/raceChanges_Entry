@@ -31,19 +31,23 @@ app.post('/save', (req, res) => {
         return res.status(400).json({ error: "Missing fileName or data" });
     }
 
+    const filePath = path.join(JSON_DIR, fileName);
+
     let finalData;
 
-    // If it's an array (race changes), wrap it with metadata and sort
-    if (Array.isArray(data)) {
-        const sortedChanges = data.sort((a, b) => {
-            const raceA = parseInt(a.raceNumber?.replace(/\D/g, "") || 0, 10);
-            const raceB = parseInt(b.raceNumber?.replace(/\D/g, "") || 0, 10);
-            if (raceA !== raceB) return raceA - raceB;
+    if (fileName.endsWith("_changes.json")) {
+        // ✅ Wrap race changes with extra info if it's a _changes file
+        const sortedChanges = Array.isArray(data)
+            ? data.sort((a, b) => {
+                const raceA = parseInt(a.raceNumber?.replace(/\D/g, "") || 0, 10);
+                const raceB = parseInt(b.raceNumber?.replace(/\D/g, "") || 0, 10);
+                if (raceA !== raceB) return raceA - raceB;
 
-            const padA = parseInt(a.saddlePad || 0, 10);
-            const padB = parseInt(b.saddlePad || 0, 10);
-            return padA - padB;
-        });
+                const padA = parseInt(a.saddlePad || 0, 10);
+                const padB = parseInt(b.saddlePad || 0, 10);
+                return padA - padB;
+            })
+            : data;
 
         finalData = {
             trackCondition: trackCondition || "",
@@ -52,10 +56,9 @@ app.post('/save', (req, res) => {
             changes: sortedChanges
         };
     } else {
+        // ✅ For non-_changes files (equipment, drivers), just save the data directly
         finalData = data;
     }
-
-    const filePath = path.join(JSON_DIR, fileName);
 
     try {
         fs.writeFileSync(filePath, JSON.stringify(finalData, null, 2));
@@ -66,6 +69,7 @@ app.post('/save', (req, res) => {
         res.status(500).json({ error: "Failed to save file." });
     }
 });
+
 
 
 // ✅ Serve JSON Files
