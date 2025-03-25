@@ -145,77 +145,78 @@
 		
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// CHECK ENTRIES
-		document.addEventListener("DOMContentLoaded", function () {
-			document.getElementById("raceDate")?.addEventListener("change", function () {
-				let selectedDate = this.value;
-				let trackName = document.getElementById("trackName").value;
+		document.getElementById("raceDate").addEventListener("change", function () {
+		    const selectedDate = this.value;
+		    const trackName = document.getElementById("trackName").value;
 		
-				if (!selectedDate || !trackName) return;
+		    if (!selectedDate || !trackName) return;
 		
-				console.log("📌 Checking for existing entries:", trackName, selectedDate);
+		    console.log("📌 Checking for existing entries:", trackName, selectedDate);
 		
-				fetch(`/get-entries?trackName=${trackName}&raceDate=${selectedDate}`)
-					    .then(response => {
-					        if (!response.ok) {
-					            throw new Error("No entries file found");
-					        }
-					        return response.json();
-					    })
-					    .then(data => {
-					        console.log("📌 Received JSON Response:", data);
-					        if (data.horseEntries) {
-					            console.log("✅ Auto-loading horse entries...");
-					            window.horseEntries = data.horseEntries;
-					        }
-					        if (data.raceChanges && data.raceChanges.length > 0) {
-					            console.log("✅ Found existing race changes:", data.raceChanges);
-					            loadExistingRaceChanges(data.raceChanges);
-					        } else {
-					            console.log("❌ No race changes found.");
-					        }
-					    })
-					    .catch(async (error) => {
-					        console.warn("⚠", error.message);
-					
-					        if (confirm("No file loaded for today. Would you like to start with a blank file?")) {
-					            const blankEntries = {};
-					            for (let i = 1; i <= 20; i++) {
-					                let raceKey = `Race ${i}`;
-					                blankEntries[raceKey] = [];
-					                for (let j = 1; j <= 20; j++) {
-					                    blankEntries[raceKey].push({ saddlePad: j.toString(), horseName: "" });
-					                }
-					            }
-					
-					            const trackName = document.getElementById("trackName").value;
-					            const raceDate = document.getElementById("raceDate").value;
-					
-					            const body = {
-					                trackName,
-					                raceDate,
-					                horseEntries: blankEntries,
-					                raceChanges: []
-					            };
-					
-					            const response = await fetch("/save-entries", {
-					                method: "POST",
-					                headers: { "Content-Type": "application/json" },
-					                body: JSON.stringify(body)
-					            });
-					
-					            const result = await response.json();
-					            if (result.success) {
-					                alert("Blank file created successfully.");
-					                window.horseEntries = blankEntries;
-					                updateAllDropdowns();
-					            } else {
-					                alert("Error creating blank file.");
-					            }
-					        }
-					    });
-
-			});
+		    fetch(`/get-entries?trackName=${trackName}&raceDate=${selectedDate}`)
+		        .then(res => res.ok ? res.json() : Promise.reject("No entries file found"))
+		        .then(data => {
+		            console.log("📌 Received JSON Response:", data);
+		
+		            const isEmpty = !data.horseEntries || Object.keys(data.horseEntries).length === 0;
+		
+		            if (isEmpty) {
+		                if (confirm("No file loaded for today. Would you like to start with a blank file?")) {
+		                    const blankEntries = {};
+		                    for (let i = 1; i <= 20; i++) {
+		                        let raceKey = `Race ${i}`;
+		                        blankEntries[raceKey] = [];
+		                        for (let j = 1; j <= 20; j++) {
+		                            blankEntries[raceKey].push({ saddlePad: j.toString(), horseName: "" });
+		                        }
+		                    }
+		
+		                    const body = {
+		                        trackName,
+		                        raceDate: selectedDate,
+		                        horseEntries: blankEntries,
+		                        raceChanges: []
+		                    };
+		
+		                    fetch("/save-entries", {
+		                        method: "POST",
+		                        headers: { "Content-Type": "application/json" },
+		                        body: JSON.stringify(body)
+		                    })
+		                    .then(res => res.json())
+		                    .then(result => {
+		                        if (result.success) {
+		                            alert("Blank file created.");
+		                            window.horseEntries = blankEntries;
+		                            updateAllDropdowns();
+		                        } else {
+		                            alert("Failed to create blank file.");
+		                        }
+		                    });
+		                }
+		                return;
+		            }
+		
+		            // ✅ If data exists, continue loading
+		            if (data.horseEntries) {
+		                console.log("✅ Auto-loading horse entries...");
+		                window.horseEntries = data.horseEntries;
+		            }
+		
+		            if (data.raceChanges && data.raceChanges.length > 0) {
+		                console.log("✅ Found existing race changes:", data.raceChanges);
+		                loadExistingRaceChanges(data.raceChanges);
+		            } else {
+		                console.log("❌ No race changes found.");
+		            }
+		
+		            updateAllDropdowns(); // ⬅️ Update UI
+		        })
+		        .catch(error => {
+		            console.log("❌ Error loading entries:", error);
+		        });
 		});
+
 
 
 
