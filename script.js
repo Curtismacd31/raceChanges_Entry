@@ -63,26 +63,31 @@
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//SET WEATHER FROM TRACK NAME
-		document.getElementById("trackName").addEventListener("change", function () {
-		    const track = this.value;
-		    if (!track) return;
+		function fetchWeather() {
+			const track = document.getElementById("trackName").value;
+			if (!track) {
+				alert("Please select a track to fetch weather.");
+				return;
+			}
 		
-		    fetch(`/get-weather?track=${encodeURIComponent(track)}`)
-		        .then(res => res.json())
-		        .then(data => {
-		            if (data.weather) {
-		                document.getElementById("weather").value = data.weather;
-		                console.log("✅ Weather updated:", data.weather);
-		            } else {
-		                console.warn("⚠ Weather data not found:", data);
-		            }
-		        })
-		        .catch(err => {
-		            console.error("❌ Weather fetch failed:", err);
-		        });
-		});
+			fetch(`/get-weather?track=${encodeURIComponent(track)}`)
+				.then(res => res.json())
+				.then(data => {
+					if (data.weather) {
+						document.getElementById("weather").value = data.weather;
+						console.log("✅ Weather updated:", data.weather);
+					} else {
+						console.warn("⚠ Weather data not found:", data);
+						alert("Weather data not available.");
+					}
+				})
+				.catch(err => {
+					console.error("❌ Weather fetch failed:", err);
+					alert("Failed to fetch weather. Check console for details.");
+				});
+		}
 
-	
+		document.getElementById("trackName").addEventListener("change", fetchWeather);
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//HELPER FUNCTION
 		function showTab(tabId) {
