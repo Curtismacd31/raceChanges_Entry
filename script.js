@@ -171,7 +171,45 @@
 							console.log("❌ No race changes found.");
 						}
 					})
-					.catch(error => console.log("❌ No stored entries found for selected date.", error));
+					.catch(async (error) => {
+					        console.warn("⚠", error.message);
+					
+					        if (confirm("No file loaded for today. Would you like to start with a blank file?")) {
+					            const blankEntries = {};
+					            for (let i = 1; i <= 20; i++) {
+					                let raceKey = `Race ${i}`;
+					                blankEntries[raceKey] = [];
+					                for (let j = 1; j <= 20; j++) {
+					                    blankEntries[raceKey].push({ saddlePad: j.toString(), horseName: "" });
+					                }
+					            }
+					
+					            const trackName = document.getElementById("trackName").value;
+					            const raceDate = document.getElementById("raceDate").value;
+					
+					            const body = {
+					                trackName,
+					                raceDate,
+					                horseEntries: blankEntries,
+					                raceChanges: []
+					            };
+					
+					            const response = await fetch("/save-entries", {
+					                method: "POST",
+					                headers: { "Content-Type": "application/json" },
+					                body: JSON.stringify(body)
+					            });
+					
+					            const result = await response.json();
+					            if (result.success) {
+					                alert("Blank file created successfully.");
+					                window.horseEntries = blankEntries;
+					                updateAllDropdowns();
+					            } else {
+					                alert("Error creating blank file.");
+					            }
+					        }
+					    });
 			});
 		});
 
