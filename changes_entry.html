@@ -146,8 +146,17 @@
         <label for="raceDate">Date:</label>
         <input type="date" id="raceDate" onchange="checkForExistingData()">
 
-        <label for="trackCondition">TRACK:</label>
-        <input type="text" id="trackCondition" placeholder="Enter Track Condition">
+	<label for="trackCondition">TRACK:</label>
+	<input list="trackConditions" id="trackCondition" name="trackCondition" placeholder="Select or type condition">
+	<datalist id="trackConditions">
+		<option value="Fast">
+		<option value="Good">
+		<option value="Sloppy">
+		<option value="Muddy">
+		<option value="Frozen">
+		<option value="Snowy">
+	</datalist>
+    
 
         <label for="weather">WEATHER:</label>
         <input type="text" id="weather" placeholder="Enter Weather Condition">
