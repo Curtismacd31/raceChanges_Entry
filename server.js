@@ -194,6 +194,45 @@ app.post("/validate-login", (req, res) => {
 });
 
 
+// GET WEATHER
+const axios = require("axios");
+const xml2js = require("xml2js");
+
+app.get("/get-weather", async (req, res) => {
+    const { track } = req.query;
+
+    try {
+        const weatherMap = JSON.parse(fs.readFileSync(path.join(JSON_DIR, "weather.json"), "utf8"));
+        const url = weatherMap[track];
+
+        if (!url) {
+            return res.status(404).json({ error: "No weather URL found for track." });
+        }
+
+        const response = await axios.get(url);
+        const xml = response.data;
+
+        xml2js.parseString(xml, (err, result) => {
+            if (err) {
+                return res.status(500).json({ error: "Failed to parse weather feed." });
+            }
+
+            const entries = result.feed.entry || [];
+            if (entries.length < 2 || !entries[1].title || !entries[1].title[0]) {
+                return res.status(404).json({ error: "No current conditions found." });
+            }
+
+            const currentConditions = entries[1].title[0]; // e.g. "Current Conditions: -0.7°C"
+            res.json({ weather: currentConditions });
+        });
+    } catch (error) {
+        console.error("❌ Weather fetch error:", error);
+        res.status(500).json({ error: "Error fetching weather." });
+    }
+});
+
+
+
 
 // ✅ Test Server Endpoint
 app.get("/status", (req, res) => {
