@@ -158,6 +158,7 @@ app.get("/get-entries", (req, res) => {
 });
 
 // ✅ Validate Login
+// ✅ Validate Login with Logging
 app.post("/validate-login", (req, res) => {
     const { code } = req.body;
     console.log("🔑 Login attempt with code:", code);
@@ -169,14 +170,25 @@ app.post("/validate-login", (req, res) => {
     }
 
     const judgeData = JSON.parse(fs.readFileSync(judgeFile, "utf8"));
+    const logPath = path.join(JSON_DIR, "logins.log");
+
+    const timestamp = new Date().toISOString();
+    const logLine = `${timestamp} - Login attempt with code: ${code} - `;
+
     if (judgeData[code]) {
-        console.log(`✅ Judge code valid: ${code}`);
+        const trackList = judgeData[code].trackOptions.join(", ");
+        const successLine = `${logLine}✅ SUCCESS - Tracks: ${trackList}\n`;
+        fs.appendFileSync(logPath, successLine);
+        console.log(successLine.trim());
         return res.json({ success: true, trackOptions: judgeData[code].trackOptions });
     } else {
-        console.log(`❌ Invalid judge code: ${code}`);
+        const failLine = `${logLine}❌ FAILED\n`;
+        fs.appendFileSync(logPath, failLine);
+        console.log(failLine.trim());
         return res.status(401).json({ success: false, message: "Invalid code." });
     }
 });
+
 
 
 // ✅ Test Server Endpoint
