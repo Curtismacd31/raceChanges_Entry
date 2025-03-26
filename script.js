@@ -98,6 +98,31 @@
 			}
 		}
 
+		///////////////////////////////////////////////////////////////////
+		//LOCK IF LOGGED IN ALREADY
+		function lockTrack(trackName, raceDate, userCode) {
+		    fetch("/lock-track", {
+		        method: "POST",
+		        headers: { "Content-Type": "application/json" },
+		        body: JSON.stringify({ trackName, raceDate, user: userCode })
+		    })
+		    .then(res => res.json())
+		    .then(data => {
+		        if (!data.success) {
+		            alert(data.message);
+		            // Optional: disable form or reload
+		            return;
+		        }
+		
+		        console.log("✅ Track locked by user.");
+		        // Continue with loading UI...
+		    })
+		    .catch(err => {
+		        console.error("❌ Error locking track:", err);
+		    });
+		}
+
+
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//CHECK FOR EXISTING FILE
 		function checkForExistingData() {
