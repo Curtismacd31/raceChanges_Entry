@@ -231,6 +231,42 @@ app.get("/get-weather", async (req, res) => {
     }
 });
 
+// ✅ Lock Track + Date
+app.post("/lock-track", (req, res) => {
+    const { trackName, raceDate, user } = req.body;
+
+    if (!trackName || !raceDate || !user) {
+        return res.status(400).json({ error: "Missing required fields." });
+    }
+
+    const lockFile = path.join(JSON_DIR, "locks.json");
+    let locks = {};
+
+    // Read current locks
+    if (fs.existsSync(lockFile)) {
+        locks = JSON.parse(fs.readFileSync(lockFile, "utf8"));
+    }
+
+    const key = `${trackName}_${raceDate}`;
+
+    if (locks[key] && locks[key].user !== user) {
+        return res.status(403).json({ 
+            success: false, 
+            message: `Track is currently locked by ${locks[key].user}` 
+        });
+    }
+
+    // Set or refresh lock
+    locks[key] = {
+        user,
+        timestamp: new Date().toISOString()
+    };
+
+    fs.writeFileSync(lockFile, JSON.stringify(locks, null, 2));
+    res.json({ success: true, message: "Track locked successfully." });
+});
+
+
 
 
 
