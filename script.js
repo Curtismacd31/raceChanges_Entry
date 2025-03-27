@@ -77,27 +77,28 @@
 						const titleText = data.weather;
 						console.log("🌤 Raw Weather Title:", titleText);
 				
-						const match = titleText.match(/-?\d+\.?\d*°C/); // broader match
+						// Match pattern like: "Current Conditions: Partly Cloudy, 1.8°C"
+						const match = titleText.match(/Current Conditions:\s*(.+),\s*(-?\d+\.?\d*)°C/i);
 				
 						if (match) {
-							let celsiusStr = match[0].replace("°C", "");
-							const tempC = parseFloat(celsiusStr);
+							const condition = match[1]; // e.g. "Partly Cloudy"
+							const tempC = parseFloat(match[2]); // e.g. 1.8
 							const roundedC = Math.round(tempC);
 							const tempF = Math.round((roundedC * 9) / 5 + 32);
-							const formatted = `Current Conditions: ${roundedC}°C / ${tempF}°F`;
+							const formatted = `Current Conditions: ${condition}, ${roundedC}°C / ${tempF}°F`;
 				
 							document.getElementById("weather").value = formatted;
 							console.log("✅ Weather updated:", formatted);
 						} else {
+							// Fallback if format is unexpected
 							document.getElementById("weather").value = titleText;
-							console.log("⚠ Could not parse temperature. Showing raw data.");
+							console.warn("⚠ Could not parse weather format. Showing raw data.");
 						}
 					} else {
 						console.warn("⚠ Weather data not found:", data);
 						alert("Weather data not available.");
 					}
 				})
-
 		}
 
 		document.getElementById("trackName").addEventListener("change", fetchWeather);
