@@ -74,17 +74,29 @@
 				.then(res => res.json())
 				.then(data => {
 					if (data.weather) {
-						document.getElementById("weather").value = data.weather;
-						console.log("✅ Weather updated:", data.weather);
+						const titleText = data.weather;
+				
+						// 🔍 Try to extract the Celsius temperature
+						const match = titleText.match(/Current Conditions:\s*(-?\d+\.?\d*)°C/);
+				
+						if (match) {
+							const tempC = parseFloat(match[1]);
+							const roundedC = Math.round(tempC);
+							const tempF = Math.round((roundedC * 9) / 5 + 32);
+							const formatted = `Current Conditions: ${roundedC}°C / ${tempF}°F`;
+				
+							document.getElementById("weather").value = formatted;
+							console.log("✅ Weather updated:", formatted);
+						} else {
+							// If temp not found, use the raw text
+							document.getElementById("weather").value = titleText;
+							console.log("⚠ Could not parse temperature. Showing raw data.");
+						}
 					} else {
 						console.warn("⚠ Weather data not found:", data);
 						alert("Weather data not available.");
 					}
 				})
-				.catch(err => {
-					console.error("❌ Weather fetch failed:", err);
-					alert("Failed to fetch weather. Check console for details.");
-				});
 		}
 
 		document.getElementById("trackName").addEventListener("change", fetchWeather);
