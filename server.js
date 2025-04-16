@@ -286,7 +286,7 @@ app.post("/lock-track", (req, res) => {
         locks = JSON.parse(fs.readFileSync(lockFile, "utf8"));
     }
 
-    const key = \`\${trackName}_\${raceDate}\`;
+    const key = `${trackName}_${raceDate}`;
 
     if (locks[key] && locks[key].user !== user) {
         return res.status(403).json({ success: false, message: \`Track is locked by \${locks[key].user}\` });
