@@ -150,7 +150,8 @@
 			console.log("📌 Checking for existing files:", changesFile, entriesFile);
 		
 			// ✅ Step 1: Load Entries First
-			fetch(`/json/${entriesFile}`)
+			// ✅ Step 1: Load Entries from DB
+			fetch(`/get-entries?trackName=${encodeURIComponent(trackName)}&raceDate=${encodeURIComponent(raceDate)}`)
 				.then(response => response.ok ? response.json() : Promise.reject("Entries file not found"))
 				.then(entries => {
 					console.log("📌 Received Race Entries:", entries);
