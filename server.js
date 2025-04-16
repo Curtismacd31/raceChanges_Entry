@@ -41,12 +41,24 @@ db.prepare(`
   )
 `).run();
 
+//Entries DB Creation
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS entries (
+    id INTEGER PRIMARY KEY,
+    track TEXT,
+    date TEXT,
+    raceNumber TEXT,
+    saddlePad TEXT,
+    horseName TEXT
+  )
+`).run();
+
+
 // ✅ Serve homepage
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'changes_entry.html'));
 });
 
-// ✅ API version of saving changes to DB instead of JSON file
 // ✅ API version of saving changes to DB instead of JSON file
 app.post('/api/:filename', (req, res) => {
     const [track, datePart] = decodeURIComponent(req.params.filename).split("_");
@@ -188,49 +200,66 @@ app.get('/get-api/:track/:date', (req, res) => {
 
 // ✅ Save entries
 app.post("/save-entries", (req, res) => {
-    let { trackName, raceDate, horseEntries, raceChanges } = req.body;
-    if (!trackName || !raceDate || !horseEntries) return res.status(400).json({ error: "Missing fields" });
+    const { trackName, raceDate, horseEntries } = req.body;
+    if (!trackName || !raceDate || !horseEntries) {
+        return res.status(400).json({ error: "Missing fields" });
+    }
 
-    const filePath = path.join(JSON_DIR, `${trackName}_${raceDate}_entries.json`);
-    const sortedChanges = Array.isArray(raceChanges)
-        ? raceChanges.sort((a, b) => {
-            const raceA = parseInt(a.raceNumber?.replace(/\D/g, "") || 0, 10);
-            const raceB = parseInt(b.raceNumber?.replace(/\D/g, "") || 0, 10);
-            if (raceA !== raceB) return raceA - raceB;
-            const padA = parseInt(a.saddlePad || 0, 10);
-            const padB = parseInt(b.saddlePad || 0, 10);
-            return padA - padB;
-        }) : [];
+    const insert = db.prepare(`
+      INSERT INTO entries (track, date, raceNumber, saddlePad, horseName)
+      VALUES (?, ?, ?, ?, ?)
+    `);
 
-    const toSave = { horseEntries: horseEntries || {}, raceChanges: sortedChanges };
+    const deleteOld = db.prepare(`DELETE FROM entries WHERE track = ? AND date = ?`);
+    const insertMany = db.transaction((entries) => {
+        deleteOld.run(trackName, raceDate);
+        for (const raceNumber in entries) {
+            for (const horse of entries[raceNumber]) {
+                insert.run(trackName, raceDate, raceNumber, horse.saddlePad, horse.horseName);
+            }
+        }
+    });
 
     try {
-        fs.writeFileSync(filePath, JSON.stringify(toSave, null, 2));
-        res.json({ success: true, message: "Entries saved" });
+        insertMany(horseEntries);
+        res.json({ success: true, message: "Entries saved to DB." });
     } catch (e) {
-        console.error("❌ Error saving entries:", e);
-        res.status(500).json({ error: "Failed to save entries." });
+        console.error("❌ Error saving entries to DB:", e);
+        res.status(500).json({ error: "Failed to save entries to DB." });
     }
 });
+
 
 // ✅ Get Entries
 app.get("/get-entries", (req, res) => {
     const { trackName, raceDate } = req.query;
-    const filePath = path.join(JSON_DIR, `${trackName}_${raceDate}_entries.json`);
-    if (!fs.existsSync(filePath)) {
-        const empty = { horseEntries: {}, raceChanges: [] };
-        fs.writeFileSync(filePath, JSON.stringify(empty, null, 2));
-        return res.status(200).json(empty);
-    }
+    if (!trackName || !raceDate) return res.status(400).json({ error: "Missing fields" });
 
     try {
-        const data = fs.readFileSync(filePath, "utf8");
-        res.json(JSON.parse(data));
+        const rows = db.prepare(`
+            SELECT raceNumber, saddlePad, horseName FROM entries
+            WHERE track = ? AND date = ?
+            ORDER BY raceNumber, CAST(saddlePad AS INTEGER)
+        `).all(trackName, raceDate);
+
+        const horseEntries = {};
+        rows.forEach(row => {
+            if (!horseEntries[row.raceNumber]) {
+                horseEntries[row.raceNumber] = [];
+            }
+            horseEntries[row.raceNumber].push({
+                saddlePad: row.saddlePad,
+                horseName: row.horseName
+            });
+        });
+
+        res.json({ horseEntries });
     } catch (e) {
-        console.error("❌ Error loading entries:", e);
-        res.status(500).json({ error: "Failed to read entries." });
+        console.error("❌ Error reading entries from DB:", e);
+        res.status(500).json({ error: "Failed to load entries from DB." });
     }
 });
+
 
 // ✅ Login Validator
 app.post("/validate-login", (req, res) => {
