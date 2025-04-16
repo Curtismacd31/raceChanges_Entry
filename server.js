@@ -212,7 +212,7 @@ app.post("/save-entries", (req, res) => {
 // ✅ Get Entries
 app.get("/get-entries", (req, res) => {
     const { trackName, raceDate } = req.query;
-    const filePath = path.join(JSON_DIR, \`\${trackName}_\${raceDate}_entries.json\`);
+    const filePath = path.join(JSON_DIR, `${trackName}_${raceDate}_entries.json`);
     if (!fs.existsSync(filePath)) {
         const empty = { horseEntries: {}, raceChanges: [] };
         fs.writeFileSync(filePath, JSON.stringify(empty, null, 2));
