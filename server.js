@@ -289,7 +289,7 @@ app.post("/lock-track", (req, res) => {
     const key = `${trackName}_${raceDate}`;
 
     if (locks[key] && locks[key].user !== user) {
-        return res.status(403).json({ success: false, message: \`Track is locked by \${locks[key].user}\` });
+        return res.status(403).json({ success: false, message: `Track is locked by ${locks[key].user}` });
     }
 
     locks[key] = {
