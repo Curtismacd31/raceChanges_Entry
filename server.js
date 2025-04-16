@@ -39,7 +39,7 @@ db.prepare(`
     weather TEXT,
     variant TEXT
   )
-\`).run();
+`).run();
 
 // ✅ Serve homepage
 app.get('/', (req, res) => {
