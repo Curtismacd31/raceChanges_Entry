@@ -1,21 +1,22 @@
+// ✅ Full server.js with SQLite + all your existing routes
+
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
+const axios = require("axios");
+const xml2js = require("xml2js");
+const Database = require('better-sqlite3');
 
 const app = express();
 const JSON_DIR = path.join(__dirname, "json");
+const db = new Database(path.join(__dirname, 'race_changes.db'));
 
 // ✅ Middleware
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-app.use(express.static(__dirname)); // ✅ Serve static files
-
-// ✅ Serve homepage
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'changes_entry.html'));
-});
+app.use(express.static(__dirname));
 
 // ✅ Ensure JSON directory exists
 if (!fs.existsSync(JSON_DIR)) {
@@ -23,260 +24,241 @@ if (!fs.existsSync(JSON_DIR)) {
     console.log("✅ JSON directory created.");
 }
 
-// ✅ Save JSON Files (Changes & Entries)
-app.post('/save', (req, res) => {
-    const { fileName, data, trackCondition, weather, variant } = req.body;
+// ✅ Create SQLite table if it doesn't exist
+db.prepare(\`
+  CREATE TABLE IF NOT EXISTS changes (
+    id INTEGER PRIMARY KEY,
+    track TEXT,
+    date TEXT,
+    raceNumber TEXT,
+    saddlePad TEXT,
+    horseName TEXT,
+    category TEXT,
+    change TEXT,
+    trackCondition TEXT,
+    weather TEXT,
+    variant TEXT
+  )
+\`).run();
 
-    if (!fileName || !data) {
-        return res.status(400).json({ error: "Missing fileName or data" });
+// ✅ Serve homepage
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'changes_entry.html'));
+});
+
+// ✅ API version of saving changes to DB instead of JSON file
+app.post('/api/:filename', (req, res) => {
+    const [track, datePart] = decodeURIComponent(req.params.filename).split("_");
+    const date = datePart.replace("_changes", "");
+
+    const { trackCondition, weather, variant, changes } = req.body;
+
+    if (!track || !date || !Array.isArray(changes)) {
+        return res.status(400).json({ error: "Missing or invalid data structure" });
     }
 
-    const filePath = path.join(JSON_DIR, fileName);
+    const insert = db.prepare(\`
+        INSERT INTO changes (
+          track, date, raceNumber, saddlePad, horseName, category, change,
+          trackCondition, weather, variant
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    \`);
 
-    let finalData;
-
-    if (fileName.endsWith("_changes.json")) {
-        // ✅ Wrap race changes with extra info if it's a _changes file
-        const sortedChanges = Array.isArray(data)
-            ? data.sort((a, b) => {
-                const raceA = parseInt(a.raceNumber?.replace(/\D/g, "") || 0, 10);
-                const raceB = parseInt(b.raceNumber?.replace(/\D/g, "") || 0, 10);
-                if (raceA !== raceB) return raceA - raceB;
-
-                const padA = parseInt(a.saddlePad || 0, 10);
-                const padB = parseInt(b.saddlePad || 0, 10);
-                return padA - padB;
-            })
-            : data;
-
-        finalData = {
-            trackCondition: trackCondition || "",
-            weather: weather || "",
-            variant: variant || "",
-            changes: sortedChanges
-        };
-    } else {
-        // ✅ For non-_changes files (equipment, drivers), just save the data directly
-        finalData = data;
-    }
+    const insertMany = db.transaction((rows) => {
+        for (const c of rows) {
+            insert.run(
+                track,
+                date,
+                c.raceNumber,
+                c.saddlePad,
+                c.horseName,
+                c.category,
+                c.change,
+                trackCondition || '',
+                weather || '',
+                variant || ''
+            );
+        }
+    });
 
     try {
-        fs.writeFileSync(filePath, JSON.stringify(finalData, null, 2));
-        console.log(`✅ File saved: ${filePath}`);
-        res.json({ success: true, message: `File saved: ${fileName}` });
-    } catch (error) {
-        console.error("❌ Error saving file:", error);
-        res.status(500).json({ error: "Failed to save file." });
+        insertMany(changes);
+        res.json({ success: true, message: "Saved to database." });
+    } catch (e) {
+        console.error("❌ DB Error:", e);
+        res.status(500).json({ error: "Failed to save to DB" });
     }
 });
 
+// ✅ Existing route: Save JSON Files
+app.post('/save', (req, res) => {
+    const { fileName, data, trackCondition, weather, variant } = req.body;
+    if (!fileName || !data) return res.status(400).json({ error: "Missing fileName or data" });
 
+    const filePath = path.join(JSON_DIR, fileName);
+    const sortedChanges = Array.isArray(data)
+        ? data.sort((a, b) => {
+            const raceA = parseInt(a.raceNumber?.replace(/\D/g, "") || 0, 10);
+            const raceB = parseInt(b.raceNumber?.replace(/\D/g, "") || 0, 10);
+            if (raceA !== raceB) return raceA - raceB;
+            const padA = parseInt(a.saddlePad || 0, 10);
+            const padB = parseInt(b.saddlePad || 0, 10);
+            return padA - padB;
+        }) : data;
 
-// ✅ Serve JSON Files
-app.get("/json/:fileName", (req, res) => {
-    const filePath = path.join(JSON_DIR, req.params.fileName);
-
-    if (!fs.existsSync(filePath)) {
-        console.log(`❌ File not found: ${filePath}`);
-        return res.status(404).json({ error: "File not found." });
-    }
+    const finalData = fileName.endsWith("_changes.json")
+        ? { trackCondition: trackCondition || "", weather: weather || "", variant: variant || "", changes: sortedChanges }
+        : data;
 
     try {
-        const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
-        console.log(`✅ Serving file: ${filePath}`);
-        res.json(data);
-    } catch (error) {
-        console.error(`❌ Error reading file ${filePath}:`, error);
+        fs.writeFileSync(filePath, JSON.stringify(finalData, null, 2));
+        res.json({ success: true, message: "File saved: " + fileName });
+    } catch (e) {
+        console.error("❌ File save failed:", e);
+        res.status(500).json({ error: "Failed to save file" });
+    }
+});
+
+// ✅ Serve JSON files
+app.get("/json/:fileName", (req, res) => {
+    const filePath = path.join(JSON_DIR, req.params.fileName);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: "File not found." });
+
+    try {
+        const data = fs.readFileSync(filePath, "utf8");
+        res.json(JSON.parse(data));
+    } catch (err) {
+        console.error("❌ File read error:", err);
         res.status(500).json({ error: "Error reading file" });
     }
 });
 
-// ✅ Save Race Entries & Changes
+// ✅ Save entries
 app.post("/save-entries", (req, res) => {
     let { trackName, raceDate, horseEntries, raceChanges } = req.body;
+    if (!trackName || !raceDate || !horseEntries) return res.status(400).json({ error: "Missing fields" });
 
-    if (!trackName || !raceDate || !horseEntries) {
-        console.error("❌ Missing required fields:", { trackName, raceDate, horseEntries });
-        return res.status(400).json({ error: "Missing required fields." });
-    }
-
-    try {
-        const dateObj = new Date(raceDate);
-        if (isNaN(dateObj)) throw new Error("Invalid date");
-        raceDate = dateObj.toISOString().split("T")[0];
-    } catch (error) {
-        console.error("❌ Date parsing failed:", raceDate);
-        return res.status(400).json({ error: "Invalid date format." });
-    }
-
-    const filePath = path.join(JSON_DIR, `${trackName}_${raceDate}_entries.json`);
-
+    const filePath = path.join(JSON_DIR, \`\${trackName}_\${raceDate}_entries.json\`);
     const sortedChanges = Array.isArray(raceChanges)
-      ? raceChanges.sort((a, b) => {
-          const raceA = parseInt(a.raceNumber?.replace(/\D/g, "") || 0, 10);
-          const raceB = parseInt(b.raceNumber?.replace(/\D/g, "") || 0, 10);
-          if (raceA !== raceB) return raceA - raceB;
-    
-          const padA = parseInt(a.saddlePad || 0, 10);
-          const padB = parseInt(b.saddlePad || 0, 10);
-          return padA - padB;
-        })
-      : [];
-    
-    const dataToSave = {
-        horseEntries: horseEntries || {},
-        raceChanges: sortedChanges
-    };
+        ? raceChanges.sort((a, b) => {
+            const raceA = parseInt(a.raceNumber?.replace(/\D/g, "") || 0, 10);
+            const raceB = parseInt(b.raceNumber?.replace(/\D/g, "") || 0, 10);
+            if (raceA !== raceB) return raceA - raceB;
+            const padA = parseInt(a.saddlePad || 0, 10);
+            const padB = parseInt(b.saddlePad || 0, 10);
+            return padA - padB;
+        }) : [];
 
+    const toSave = { horseEntries: horseEntries || {}, raceChanges: sortedChanges };
 
     try {
-        fs.writeFileSync(filePath, JSON.stringify(dataToSave, null, 2));
-        console.log(`✅ Successfully saved entries for ${trackName} on ${raceDate}`);
-        res.json({ success: true, message: `Entries saved: ${filePath}` });
-    } catch (error) {
-        console.error("❌ Error saving entries:", error);
+        fs.writeFileSync(filePath, JSON.stringify(toSave, null, 2));
+        res.json({ success: true, message: "Entries saved" });
+    } catch (e) {
+        console.error("❌ Error saving entries:", e);
         res.status(500).json({ error: "Failed to save entries." });
     }
 });
 
-// ✅ Retrieve Stored Entries
+// ✅ Get Entries
 app.get("/get-entries", (req, res) => {
     const { trackName, raceDate } = req.query;
-    const filePath = path.join(JSON_DIR, `${trackName}_${raceDate}_entries.json`);
-
+    const filePath = path.join(JSON_DIR, \`\${trackName}_\${raceDate}_entries.json\`);
     if (!fs.existsSync(filePath)) {
-        console.log(`❌ Entries file not found: ${filePath}`);
-        const emptyData = { horseEntries: {}, raceChanges: [] };
-        fs.writeFileSync(filePath, JSON.stringify(emptyData, null, 2));
-        return res.status(200).json(emptyData);
+        const empty = { horseEntries: {}, raceChanges: [] };
+        fs.writeFileSync(filePath, JSON.stringify(empty, null, 2));
+        return res.status(200).json(empty);
     }
 
     try {
-        const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
-        console.log(`✅ Serving entries file: ${filePath}`);
-        res.json(data);
-    } catch (error) {
-        console.error(`❌ Error reading entries file ${filePath}:`, error);
-        res.status(500).json({ error: "Error reading entries file" });
+        const data = fs.readFileSync(filePath, "utf8");
+        res.json(JSON.parse(data));
+    } catch (e) {
+        console.error("❌ Error loading entries:", e);
+        res.status(500).json({ error: "Failed to read entries." });
     }
 });
 
-// ✅ Validate Login
-// ✅ Validate Login with Logging
+// ✅ Login Validator
 app.post("/validate-login", (req, res) => {
     const { code } = req.body;
-    console.log("🔑 Login attempt with code:", code);
-
     const judgeFile = path.join(JSON_DIR, "judges.json");
-    if (!fs.existsSync(judgeFile)) {
-        console.log("❌ Judge file not found:", judgeFile);
-        return res.status(500).json({ error: "Judge list not found." });
-    }
-
-    const judgeData = JSON.parse(fs.readFileSync(judgeFile, "utf8"));
-    const logPath = path.join(JSON_DIR, "logins.log");
-
+    const logFile = path.join(JSON_DIR, "logins.log");
     const timestamp = new Date().toISOString();
-    const logLine = `${timestamp} - Login attempt with code: ${code} - `;
+
+    if (!fs.existsSync(judgeFile)) return res.status(500).json({ error: "Judge list not found." });
+    const judgeData = JSON.parse(fs.readFileSync(judgeFile, "utf8"));
+
+    const log = `${timestamp} - Login attempt with code: ${code} - `;
 
     if (judgeData[code]) {
-        const trackList = judgeData[code].trackOptions.join(", ");
-        const successLine = `${logLine}✅ SUCCESS - Tracks: ${trackList}\n`;
-        fs.appendFileSync(logPath, successLine);
-        console.log(successLine.trim());
+        fs.appendFileSync(logFile, log + "✅ SUCCESS\n");
         return res.json({ success: true, trackOptions: judgeData[code].trackOptions });
     } else {
-        const failLine = `${logLine}❌ FAILED\n`;
-        fs.appendFileSync(logPath, failLine);
-        console.log(failLine.trim());
+        fs.appendFileSync(logFile, log + "❌ FAILED\n");
         return res.status(401).json({ success: false, message: "Invalid code." });
     }
 });
 
-
-// GET WEATHER
-const axios = require("axios");
-const xml2js = require("xml2js");
-
+// ✅ Weather Fetcher
 app.get("/get-weather", async (req, res) => {
     const { track } = req.query;
-
     try {
-        const weatherMap = JSON.parse(fs.readFileSync(path.join(JSON_DIR, "weather.json"), "utf8"));
-        const url = weatherMap[track];
-
-        if (!url) {
-            return res.status(404).json({ error: "No weather URL found for track." });
-        }
+        const map = JSON.parse(fs.readFileSync(path.join(JSON_DIR, "weather.json"), "utf8"));
+        const url = map[track];
+        if (!url) return res.status(404).json({ error: "No weather URL for track." });
 
         const response = await axios.get(url);
-        const xml = response.data;
-
-        xml2js.parseString(xml, (err, result) => {
-            if (err) {
-                return res.status(500).json({ error: "Failed to parse weather feed." });
-            }
+        xml2js.parseString(response.data, (err, result) => {
+            if (err) return res.status(500).json({ error: "Failed to parse weather XML." });
 
             const entries = result.feed.entry || [];
-            if (entries.length < 2 || !entries[1].title || !entries[1].title[0]) {
-                return res.status(404).json({ error: "No current conditions found." });
+            if (entries.length < 2 || !entries[1].title?.[0]) {
+                return res.status(404).json({ error: "No current conditions." });
             }
 
-            const currentConditions = entries[1].title[0]; // e.g. "Current Conditions: -0.7°C"
-            res.json({ weather: currentConditions });
+            res.json({ weather: entries[1].title[0] });
         });
-    } catch (error) {
-        console.error("❌ Weather fetch error:", error);
-        res.status(500).json({ error: "Error fetching weather." });
+    } catch (e) {
+        console.error("❌ Weather error:", e);
+        res.status(500).json({ error: "Failed to fetch weather." });
     }
 });
 
-// ✅ Lock Track + Date
+// ✅ Track locking
 app.post("/lock-track", (req, res) => {
     const { trackName, raceDate, user } = req.body;
-
-    if (!trackName || !raceDate || !user) {
-        return res.status(400).json({ error: "Missing required fields." });
-    }
+    if (!trackName || !raceDate || !user) return res.status(400).json({ error: "Missing fields." });
 
     const lockFile = path.join(JSON_DIR, "locks.json");
     let locks = {};
 
-    // Read current locks
     if (fs.existsSync(lockFile)) {
         locks = JSON.parse(fs.readFileSync(lockFile, "utf8"));
     }
 
-    const key = `${trackName}_${raceDate}`;
+    const key = \`\${trackName}_\${raceDate}\`;
 
     if (locks[key] && locks[key].user !== user) {
-        return res.status(403).json({ 
-            success: false, 
-            message: `Track is currently locked by ${locks[key].user}` 
-        });
+        return res.status(403).json({ success: false, message: \`Track is locked by \${locks[key].user}\` });
     }
 
-    // Set or refresh lock
     locks[key] = {
         user,
         timestamp: new Date().toISOString()
     };
 
     fs.writeFileSync(lockFile, JSON.stringify(locks, null, 2));
-    res.json({ success: true, message: "Track locked successfully." });
+    res.json({ success: true, message: "Track locked." });
 });
 
-
-
-
-
-// ✅ Test Server Endpoint
+// ✅ Server Health
 app.get("/status", (req, res) => {
     res.json({ success: true, message: "Server is running." });
 });
 
-// ✅ Start Server
+// ✅ Start
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`🚀 Server running at http://localhost:${PORT}`);
+    console.log(\`🚀 Server running at http://localhost:\${PORT}\`);
 });
