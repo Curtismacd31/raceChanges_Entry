@@ -48,6 +48,7 @@ app.get('/', (req, res) => {
 });
 
 // ✅ API version of saving changes to DB instead of JSON file
+// ✅ API version of saving changes to DB instead of JSON file
 app.post('/api/:filename', (req, res) => {
     const [track, datePart] = decodeURIComponent(req.params.filename).split("_");
     const date = datePart.replace("_changes", "");
@@ -58,12 +59,13 @@ app.post('/api/:filename', (req, res) => {
         return res.status(400).json({ error: "Missing or invalid data structure" });
     }
 
-    const insert = db.prepare(\`
+    // ✅ CORRECT USAGE — no backslash before the backtick
+    const insert = db.prepare(`
         INSERT INTO changes (
           track, date, raceNumber, saddlePad, horseName, category, change,
           trackCondition, weather, variant
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    \`);
+    `);
 
     const insertMany = db.transaction((rows) => {
         for (const c of rows) {
@@ -90,6 +92,7 @@ app.post('/api/:filename', (req, res) => {
         res.status(500).json({ error: "Failed to save to DB" });
     }
 });
+
 
 // ✅ Existing route: Save JSON Files
 app.post('/save', (req, res) => {
