@@ -196,17 +196,17 @@
 				raceSelect.innerHTML = '<option value="">Select</option>';
 
 				Object.keys(window.horseEntries)
-				    .sort((a, b) => {
-				        const numA = parseInt(a.replace(/\D/g, ''), 10);
-				        const numB = parseInt(b.replace(/\D/g, ''), 10);
-				        return numA - numB;
-				    })
-				    .forEach(raceNum => {
-				        let option = document.createElement("option");
-				        option.value = raceNum;
-				        option.textContent = raceNum;
-				        raceSelect.appendChild(option);
-				    });
+				  .sort((a, b) => {
+				    const numA = parseInt(a.match(/\d+/)?.[0] || 0, 10);
+				    const numB = parseInt(b.match(/\d+/)?.[0] || 0, 10);
+				    return numA - numB;
+				  })
+				  .forEach(raceNum => {
+				    let option = document.createElement("option");
+				    option.value = raceNum;
+				    option.textContent = raceNum;
+				    raceSelect.appendChild(option);
+				  });
 
 				raceSelect.value = selectedRace; // ✅ Restore previous selection
 				raceSelect.dispatchEvent(new Event("change")); // ✅ Trigger update for Saddle Pads
