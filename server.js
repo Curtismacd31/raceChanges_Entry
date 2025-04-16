@@ -188,7 +188,7 @@ app.post("/save-entries", (req, res) => {
     let { trackName, raceDate, horseEntries, raceChanges } = req.body;
     if (!trackName || !raceDate || !horseEntries) return res.status(400).json({ error: "Missing fields" });
 
-    const filePath = path.join(JSON_DIR, \`\${trackName}_\${raceDate}_entries.json\`);
+    const filePath = path.join(JSON_DIR, `${trackName}_${raceDate}_entries.json`);
     const sortedChanges = Array.isArray(raceChanges)
         ? raceChanges.sort((a, b) => {
             const raceA = parseInt(a.raceNumber?.replace(/\D/g, "") || 0, 10);
