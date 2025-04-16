@@ -275,25 +275,30 @@ app.get("/get-entries", (req, res) => {
 
 
 // ✅ Login Validator
+const bcrypt = require("bcrypt");
+
 app.post("/validate-login", (req, res) => {
-    const { code } = req.body;
-    const judgeFile = path.join(JSON_DIR, "judges.json");
-    const logFile = path.join(JSON_DIR, "logins.log");
-    const timestamp = new Date().toISOString();
+  const { username, password } = req.body;
+  if (!username || !password) return res.status(400).json({ success: false, message: "Missing credentials" });
 
-    if (!fs.existsSync(judgeFile)) return res.status(500).json({ error: "Judge list not found." });
-    const judgeData = JSON.parse(fs.readFileSync(judgeFile, "utf8"));
+  try {
+    const row = db.prepare(`SELECT * FROM users WHERE username = ?`).get(username);
+    if (!row) return res.status(401).json({ success: false, message: "Invalid username or password" });
 
-    const log = `${timestamp} - Login attempt with code: ${code} - `;
+    bcrypt.compare(password, row.password, (err, result) => {
+      if (err || !result) {
+        return res.status(401).json({ success: false, message: "Invalid username or password" });
+      }
 
-    if (judgeData[code]) {
-        fs.appendFileSync(logFile, log + "✅ SUCCESS\n");
-        return res.json({ success: true, trackOptions: judgeData[code].trackOptions });
-    } else {
-        fs.appendFileSync(logFile, log + "❌ FAILED\n");
-        return res.status(401).json({ success: false, message: "Invalid code." });
-    }
+      const trackOptions = JSON.parse(row.trackOptions);
+      return res.json({ success: true, trackOptions });
+    });
+  } catch (e) {
+    console.error("Login error:", e);
+    res.status(500).json({ success: false, message: "Login failed" });
+  }
 });
+
 
 // ✅ Weather Fetcher
 app.get("/get-weather", async (req, res) => {
