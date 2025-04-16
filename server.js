@@ -58,13 +58,17 @@ app.post('/api/:filename', (req, res) => {
         return res.status(400).json({ error: "Missing or invalid data structure" });
     }
 
-    // ✅ CORRECT USAGE — no backslash before the backtick
+   // 🧹 First, clear old data for this track and date
+    db.prepare("DELETE FROM changes WHERE track = ? AND date = ?").run(track, date);
+    
+    // Then insert new records
     const insert = db.prepare(`
-        INSERT INTO changes (
-          track, date, raceNumber, saddlePad, horseName, category, change,
-          trackCondition, weather, variant
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO changes (
+        track, date, raceNumber, saddlePad, horseName, category, change,
+        trackCondition, weather, variant
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
+
 
     const insertMany = db.transaction((rows) => {
         for (const c of rows) {
