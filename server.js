@@ -24,6 +24,7 @@ if (!fs.existsSync(JSON_DIR)) {
     console.log("✅ JSON directory created.");
 }
 
+//THIS MAY BREAK EVERYTHING
 // ✅ Create SQLite table if it doesn't exist
 db.prepare(`
   CREATE TABLE IF NOT EXISTS changes (
