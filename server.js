@@ -53,6 +53,19 @@ db.prepare(`
   )
 `).run();
 
+// CREATE USERS DB
+// ✅ Create Users table if not exists
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    trackOptions TEXT NOT NULL -- JSON array stored as string
+  )
+`).run();
+
+
+
 
 // ✅ Serve homepage
 app.get('/', (req, res) => {
