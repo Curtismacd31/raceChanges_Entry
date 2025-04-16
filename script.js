@@ -329,6 +329,7 @@
 			let data = [];
 			const rows = document.querySelectorAll("tbody tr");
 		
+			// ✅ Gather entered changes
 			rows.forEach(row => {
 				let raceNumber = row.querySelector(".raceNumber").value;
 				let saddlePad = row.querySelector(".saddlePad").value;
@@ -336,7 +337,7 @@
 				let category = row.querySelector(".changeCategory").value;
 				let changeText = row.querySelector(".changeText").value;
 		
-				if (!raceNumber || !category) return; // ✅ Skip invalid rows
+				if (!raceNumber || !category) return;
 		
 				data.push({
 					raceNumber: raceNumber.toString(),
@@ -347,7 +348,22 @@
 				});
 			});
 		
-			const fileName = `${trackName}_${raceDate}_changes.json`;
+			// ✅ Inject "NO CHANGES" entries for missing races
+			const allRaces = Object.keys(window.horseEntries || {});
+			const racesWithChanges = new Set(data.map(change => change.raceNumber));
+		
+			allRaces.forEach(raceNum => {
+				if (!racesWithChanges.has(raceNum)) {
+					data.push({
+						raceNumber: raceNum,
+						saddlePad: "",
+						horseName: "",
+						category: "",
+						change: "NO CHANGES"
+					});
+				}
+			});
+		
 			const trackCondition = document.getElementById("trackCondition").value;
 			const weather = document.getElementById("weather").value;
 			const variant = document.getElementById("variant").value;
@@ -371,6 +387,7 @@
 			})
 			.catch(error => console.error('❌ Error saving to DB:', error));
 		}
+
 
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////
