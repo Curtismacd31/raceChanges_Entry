@@ -319,19 +319,19 @@
 				alert("Please select Track Name and Date.");
 				return;
 			}
-
+		
 			let data = [];
 			const rows = document.querySelectorAll("tbody tr");
-
+		
 			rows.forEach(row => {
 				let raceNumber = row.querySelector(".raceNumber").value;
 				let saddlePad = row.querySelector(".saddlePad").value;
 				let horseName = row.querySelector(".horseName").value;
 				let category = row.querySelector(".changeCategory").value;
 				let changeText = row.querySelector(".changeText").value;
-
+		
 				if (!raceNumber || !category) return; // ✅ Skip invalid rows
-
+		
 				data.push({
 					raceNumber: raceNumber.toString(),
 					saddlePad: saddlePad ? saddlePad.toString() : "",
@@ -340,32 +340,32 @@
 					change: changeText
 				});
 			});
-
+		
 			const fileName = `${trackName}_${raceDate}_changes.json`;
 			const trackCondition = document.getElementById("trackCondition").value;
 			const weather = document.getElementById("weather").value;
 			const variant = document.getElementById("variant").value;
-
+		
 			const apiFilename = `${trackName}_${raceDate}_changes`;
-
+		
 			fetch(`/api/${encodeURIComponent(apiFilename)}`, {
-			  method: 'POST',
-			  headers: { 'Content-Type': 'application/json' },
-			  body: JSON.stringify({
-			    trackCondition,
-			    weather,
-			    variant,
-			    changes: data
-			  })
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					trackCondition,
+					weather,
+					variant,
+					changes: data
+				})
 			})
 			.then(res => res.json())
 			.then(result => {
-			  console.log("✅ Save successful:", result);
-			  alert(result.message || `CHANGES SAVED FOR ${trackName} ${raceDate}`);
+				console.log("✅ Save successful:", result);
+				alert(result.message || `CHANGES SAVED FOR ${trackName} ${raceDate}`);
 			})
 			.catch(error => console.error('❌ Error saving to DB:', error));
-
 		}
+
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//DOWNLOAD PDF
