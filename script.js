@@ -346,17 +346,24 @@
 			const weather = document.getElementById("weather").value;
 			const variant = document.getElementById("variant").value;
 
-			fetch('/save', {
+			const apiFilename = `${trackName}_${raceDate}_changes`;
+
+			fetch(`/api/${encodeURIComponent(apiFilename)}`, {
 			  method: 'POST',
 			  headers: { 'Content-Type': 'application/json' },
 			  body: JSON.stringify({
-			    fileName,
-			    data,
 			    trackCondition,
 			    weather,
-			    variant
+			    variant,
+			    changes: data
 			  })
 			})
+			.then(res => res.json())
+			.then(result => {
+			  alert(result.message || 'Changes saved to DB.');
+			})
+			.catch(error => console.error('Error saving to DB:', error));
+
 			.then(response => response.text())
 			.then(result => {
 				console.log("✅ Save successful:", result);
