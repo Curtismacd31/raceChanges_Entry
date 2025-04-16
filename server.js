@@ -25,7 +25,7 @@ if (!fs.existsSync(JSON_DIR)) {
 }
 
 // ✅ Create SQLite table if it doesn't exist
-db.prepare(\`
+db.prepare(`
   CREATE TABLE IF NOT EXISTS changes (
     id INTEGER PRIMARY KEY,
     track TEXT,
