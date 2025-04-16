@@ -133,6 +133,52 @@ app.get("/json/:fileName", (req, res) => {
     }
 });
 
+// ✅ Serve JSON data
+app.get('/get-api/:track/:date', (req, res) => {
+  const track = decodeURIComponent(req.params.track);
+  const date = decodeURIComponent(req.params.date);
+
+  try {
+    // Fetch all rows for this track/date
+    const rows = db.prepare(`
+      SELECT raceNumber, saddlePad, horseName, category, change,
+             trackCondition, weather, variant
+      FROM changes
+      WHERE track = ? AND date = ?
+      ORDER BY
+        CAST(SUBSTR(raceNumber, INSTR(raceNumber, ' ') + 1) AS INTEGER),
+        CAST(saddlePad AS INTEGER)
+    `).all(track, date);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "No changes found for this track and date." });
+    }
+
+    // Extract common fields (assumes same per group)
+    const { trackCondition, weather, variant } = rows[0];
+
+    const changes = rows.map(row => ({
+      raceNumber: row.raceNumber,
+      saddlePad: row.saddlePad,
+      horseName: row.horseName,
+      category: row.category,
+      change: row.change
+    }));
+
+    res.json({
+      trackCondition: trackCondition || "",
+      weather: weather || "",
+      variant: variant || "",
+      changes
+    });
+
+  } catch (e) {
+    console.error("❌ Error fetching from DB:", e);
+    res.status(500).json({ error: "Failed to fetch changes from DB." });
+  }
+});
+
+
 // ✅ Save entries
 app.post("/save-entries", (req, res) => {
     let { trackName, raceDate, horseEntries, raceChanges } = req.body;
