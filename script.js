@@ -161,26 +161,25 @@
 					}
 				})
 				.then(() => {
-					// ✅ Step 2: THEN Load Changes File
-					return fetch(`/json/${changesFile}`);
+				    // ✅ Step 2: Load Changes from DB instead of JSON
+				    return fetch(`/get-api/${trackName}/${raceDate}`);
 				})
-				.then(response => response.ok ? response.json() : Promise.reject("Changes file not found"))
+				.then(response => response.ok ? response.json() : Promise.reject("Changes not found in DB"))
 				.then(data => {
-					console.log("📌 Received Changes Data:", data);
-					if (Array.isArray(data.changes) && data.changes.length > 0) {
-						console.log("✅ Loading existing race changes...");
-						loadExistingData(data.changes);
-		
-						// Restore metadata
-						document.getElementById("trackCondition").value = data.trackCondition || "";
-						document.getElementById("weather").value = data.weather || "";
-						document.getElementById("variant").value = data.variant || "";
-					} else {
-						console.warn("⚠ No valid race changes found in file.");
-					}
+				    console.log("📌 Received Changes Data:", data);
+				    if (Array.isArray(data.changes) && data.changes.length > 0) {
+				        loadExistingData(data.changes);
+				
+				        // Restore metadata
+				        document.getElementById("trackCondition").value = data.trackCondition || "";
+				        document.getElementById("weather").value = data.weather || "";
+				        document.getElementById("variant").value = data.variant || "";
+				    } else {
+				        console.warn("⚠ No valid race changes found.");
+				    }
 				})
 				.catch(error => {
-					console.log("❌ Error checking files:", error);
+				    console.log("❌ Error loading changes from DB:", error);
 				});
 		}
 
