@@ -360,9 +360,11 @@
 			})
 			.then(res => res.json())
 			.then(result => {
-			  alert(result.message || 'Changes saved to DB.');
+			  console.log("✅ Save successful:", result);
+			  alert(result.message || `CHANGES SAVED FOR ${trackName} ${raceDate}`);
 			})
-			.catch(error => console.error('Error saving to DB:', error));
+			.catch(error => console.error('❌ Error saving to DB:', error));
+
 
 			.then(response => response.text())
 			.then(result => {
