@@ -563,14 +563,21 @@
 
 			function updateRaceDropdown() {
 				if (window.horseEntries && Object.keys(window.horseEntries).length > 0) {
-					Object.keys(window.horseEntries).forEach(raceNum => {
-						let option = document.createElement("option");
-						option.value = raceNum;
-						option.textContent = raceNum;
-						raceSelect.appendChild(option);
-					});
+					Object.keys(window.horseEntries)
+						.sort((a, b) => {
+							const numA = parseInt(a.replace(/\D/g, ""), 10);
+							const numB = parseInt(b.replace(/\D/g, ""), 10);
+							return numA - numB;
+						})
+						.forEach(raceNum => {
+							let option = document.createElement("option");
+							option.value = raceNum;
+							option.textContent = raceNum;
+							raceSelect.appendChild(option);
+						});
 				}
 			}
+
 
 			updateRaceDropdown();
 			raceCell.appendChild(raceSelect);
