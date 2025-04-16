@@ -365,14 +365,6 @@
 			})
 			.catch(error => console.error('❌ Error saving to DB:', error));
 
-
-			.then(response => response.text())
-			.then(result => {
-				console.log("✅ Save successful:", result);
-				//alert(result);
-				alert(`CHANGES SAVED FOR ${trackName} ${raceDate}`);
-			})
-			.catch(error => console.error('❌ Error saving data:', error));
 		}
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////
