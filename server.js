@@ -359,8 +359,6 @@ app.get("/status", (req, res) => {
 
 
 // ✅ ADD ADMIN PANEL
-const bcrypt = require('bcrypt'); // if not already imported
-
 // Serve admin UI page
 app.get('/admin_users.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin_users.html'));
