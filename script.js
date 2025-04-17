@@ -6,17 +6,15 @@
 		// VALIDATE LOGIN
 		document.addEventListener("DOMContentLoaded", function () {
 			function validateLogin() {
+				const username = document.getElementById("usernameInput").value;
 				const password = document.getElementById("passwordInput").value;
-		
+				
 				fetch("/validate-login", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					const username = document.getElementById("usernameInput").value;
-					const password = document.getElementById("passwordInput").value;
-					
-					body: JSON.stringify({ username, password })
-
+				    method: "POST",
+				    headers: { "Content-Type": "application/json" },
+				    body: JSON.stringify({ username, password })
 				})
+
 					.then(async res => {
 						if (!res.ok) {
 							const errorText = await res.text();
