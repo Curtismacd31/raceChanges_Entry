@@ -41,17 +41,18 @@
 		
 							// Populate track dropdown
 							const trackDropdown = document.getElementById("trackName");
-							if (trackDropdown) {
-								trackDropdown.innerHTML = "";
-								data.trackOptions.forEach(track => {
-									const option = document.createElement("option");
-									option.value = track;
-									option.textContent = track;
-									trackDropdown.appendChild(option);
-								});
-							}
-						} else {
-							alert("Invalid Judges Number.");
+							    if (trackDropdown) {
+							      trackDropdown.innerHTML = "";
+							      data.trackOptions.forEach(track => {
+							        const option = document.createElement("option");
+							        option.value = track;
+							        option.textContent = track;
+							        trackDropdown.appendChild(option);
+							      });
+							    }
+							
+							  } else {
+							alert("Invalid Login.");
 						}
 					})
 					.catch(err => {
