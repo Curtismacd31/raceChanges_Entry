@@ -357,6 +357,59 @@ app.get("/status", (req, res) => {
     res.json({ success: true, message: "Server is running." });
 });
 
+
+// ✅ ADD ADMIN PANEL
+const bcrypt = require('bcrypt'); // if not already imported
+
+// Serve admin UI page
+app.get('/admin_users.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin_users.html'));
+});
+
+// Get list of users
+app.get('/admin/users', (req, res) => {
+  try {
+    const rows = db.prepare('SELECT username, role, trackOptions FROM users').all();
+    res.json(rows.map(row => ({
+      username: row.username,
+      role: row.role,
+      trackOptions: row.trackOptions ? JSON.parse(row.trackOptions) : []
+    })));
+  } catch (e) {
+    res.status(500).json({ error: "Failed to load users." });
+  }
+});
+
+// Add user
+app.post('/admin/users', async (req, res) => {
+  const { username, password, role, trackOptions } = req.body;
+  if (!username || !password) return res.status(400).json({ error: "Missing fields." });
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    db.prepare(`
+      INSERT INTO users (username, password, role, trackOptions)
+      VALUES (?, ?, ?, ?)
+    `).run(username, hashedPassword, role, JSON.stringify(trackOptions || []));
+    res.json({ success: true });
+  } catch (e) {
+    console.error("❌ Error inserting user:", e);
+    res.status(500).json({ error: "Failed to add user." });
+  }
+});
+
+// Delete user
+app.delete('/admin/users/:username', (req, res) => {
+  const { username } = req.params;
+  try {
+    db.prepare('DELETE FROM users WHERE username = ?').run(username);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: "Failed to delete user." });
+  }
+});
+
+
 // ✅ Start
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
