@@ -374,9 +374,11 @@ app.get('/admin/users', (req, res) => {
       trackOptions: row.trackOptions ? JSON.parse(row.trackOptions) : []
     })));
   } catch (e) {
+    console.error("❌ Error loading users:", e);
     res.status(500).json({ error: "Failed to load users." });
   }
 });
+
 
 // Add user
 app.post('/admin/users', async (req, res) => {
