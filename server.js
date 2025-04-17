@@ -366,36 +366,40 @@ app.get('/admin_users.html', (req, res) => {
 
 // Get list of users
 app.get('/admin/users', (req, res) => {
-  try {
-    const rows = db.prepare('SELECT username, role, trackOptions FROM users').all();
-    res.json(rows.map(row => ({
-      username: row.username,
-      role: row.role,
-      trackOptions: row.trackOptions ? JSON.parse(row.trackOptions) : []
-    })));
-  } catch (e) {
-    console.error("❌ Error loading users:", e);
-    res.status(500).json({ error: "Failed to load users." });
-  }
+    try {
+        const users = db.prepare("SELECT id, username, role, trackOptions FROM users").all();
+        users.forEach(u => {
+            u.trackOptions = u.trackOptions ? JSON.parse(u.trackOptions) : [];
+        });
+        res.json(users);
+    } catch (e) {
+        console.error("❌ Failed to load users:", e);
+        res.status(500).json({ error: "Failed to load users." });
+    }
 });
+
 
 
 // Add user
 app.post('/admin/users', async (req, res) => {
-  const { username, password, role, trackOptions } = req.body;
-  if (!username || !password) return res.status(400).json({ error: "Missing fields." });
+    const { username, password, role, trackOptions } = req.body;
 
-  try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    db.prepare(`
-      INSERT INTO users (username, password, role, trackOptions)
-      VALUES (?, ?, ?, ?)
-    `).run(username, hashedPassword, role, JSON.stringify(trackOptions || []));
-    res.json({ success: true });
-  } catch (e) {
-    console.error("❌ Error inserting user:", e);
-    res.status(500).json({ error: "Failed to add user." });
-  }
+    if (!username || !password || !role) {
+        return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const insert = db.prepare(`
+            INSERT INTO users (username, password, role, trackOptions)
+            VALUES (?, ?, ?, ?)
+        `);
+        insert.run(username, hashedPassword, role, JSON.stringify(trackOptions || []));
+        res.json({ success: true });
+    } catch (e) {
+        console.error("❌ Failed to create user:", e);
+        res.status(500).json({ error: "Failed to create user" });
+    }
 });
 
 // Delete user
