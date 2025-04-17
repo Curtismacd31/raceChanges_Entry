@@ -1,0 +1,92 @@
+<!-- admin_users.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>User Manager</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 10px; border: 1px solid #ccc; }
+    input, select, button { padding: 5px; margin: 5px; }
+  </style>
+</head>
+<body>
+  <h2>User Manager</h2>
+
+  <form id="addUserForm">
+    <input type="text" placeholder="Username" id="username" required>
+    <input type="password" placeholder="Password" id="password" required>
+    <select id="role">
+      <option value="judge">Judge</option>
+      <option value="admin">Admin</option>
+    </select>
+    <input type="text" placeholder="Track Options (comma-separated)" id="trackOptions">
+    <button type="submit">➕ Add User</button>
+  </form>
+
+  <h3>Existing Users</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Role</th>
+        <th>Track Options</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="userTable"></tbody>
+  </table>
+
+  <script>
+    async function loadUsers() {
+      const res = await fetch('/admin/users');
+      const users = await res.json();
+      const tbody = document.getElementById('userTable');
+      tbody.innerHTML = '';
+      users.forEach(user => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${user.username}</td>
+          <td>${user.role}</td>
+          <td>${user.trackOptions.join(', ')}</td>
+          <td>
+            <button onclick="deleteUser('${user.username}')">🗑 Delete</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    document.getElementById('addUserForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        username: document.getElementById('username').value.trim(),
+        password: document.getElementById('password').value.trim(),
+        role: document.getElementById('role').value,
+        trackOptions: document.getElementById('trackOptions').value.split(',').map(s => s.trim())
+      };
+
+      const res = await fetch('/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        alert("✅ User added.");
+        e.target.reset();
+        loadUsers();
+      } else {
+        alert("❌ Failed to add user.");
+      }
+    });
+
+    async function deleteUser(username) {
+      if (!confirm(`Are you sure you want to delete ${username}?`)) return;
+      await fetch(`/admin/users/${username}`, { method: 'DELETE' });
+      loadUsers();
+    }
+
+    loadUsers();
+  </script>
+</body>
+</html>
