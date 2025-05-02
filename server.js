@@ -97,6 +97,7 @@ app.post('/api/:filename', (req, res) => {
 
     const insertMany = db.transaction((rows) => {
         for (const c of rows) {
+            console.log("👉 inserting:", c);
             insert.run(
                 track,
                 date,
