@@ -139,6 +139,24 @@
 	<button onclick="fetchWeather()">Get Weather</button>
     </div>
 
+	<div id="ftpSection" style="padding: 20px; border-top: 1px solid #ccc;">
+	  <h3>📂 Load Entries via FTP</h3>
+	
+	  <label for="ftpUrl">FTP URL:</label>
+	  <input type="text" id="ftpUrl" placeholder="ftp://example.com" style="width: 300px;"><br><br>
+	
+	  <label for="ftpUsername">Username:</label>
+	  <input type="text" id="ftpUsername"><br><br>
+	
+	  <label for="ftpPassword">Password:</label>
+	  <input type="password" id="ftpPassword"><br><br>
+	
+	  <button onclick="fetchFtpFiles()">🔄 List FTP Files</button>
+	  <select id="ftpFileList" style="width: 300px; margin-top: 10px;"></select>
+	  <button onclick="downloadSelectedFtpFile()">📥 Load Selected File</button>
+	</div>
+
+
     <!-- Race Changes Tab -->
     <div class="container hidden tab" id="raceChangesTab">
         <h2>Race Changes</h2>
