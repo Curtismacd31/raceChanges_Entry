@@ -350,14 +350,6 @@
 					});
 				}
 
-		
-				data.push({
-					raceNumber: raceNumber.toString(),
-					saddlePad: saddlePad ? saddlePad.toString() : "",
-					horseName: horseName || "",
-					category,
-					change: changeText
-				});
 			});
 		
 			// ✅ Inject "NO CHANGES" entries for missing races
