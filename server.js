@@ -449,6 +449,49 @@ app.get("/ftp-list", async (req, res) => {
 });
 
 
+/////SETUP ROUTES
+const unzipper = require("unzipper"); // npm install unzipper
+const os = require("os");
+
+app.post("/ftp-download", async (req, res) => {
+  const { filename } = req.body;
+  if (!filename) return res.status(400).json({ error: "Missing filename" });
+
+  const client = new ftp.Client();
+  const tempPath = path.join(os.tmpdir(), filename);
+
+  try {
+    await client.access({
+      host: "ftp.example.com",
+      user: "username",
+      password: "password",
+      secure: false
+    });
+
+    await client.downloadTo(tempPath, filename);
+    client.close();
+
+    // Extract and return contents (assume single JSON inside)
+    fs.createReadStream(tempPath)
+      .pipe(unzipper.ParseOne())
+      .on("data", data => {
+        const content = data.toString("utf8");
+        const json = JSON.parse(content);
+        res.json(json);
+      })
+      .on("error", err => {
+        console.error("❌ Unzip error:", err);
+        res.status(500).json({ error: "Failed to extract file" });
+      });
+
+  } catch (err) {
+    console.error("❌ FTP download error:", err);
+    res.status(500).json({ error: "Failed to download file" });
+  }
+});
+
+
+
 
 // ✅ Start
 const PORT = process.env.PORT || 3000;
