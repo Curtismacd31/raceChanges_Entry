@@ -598,8 +598,8 @@
 				doc.text("No valid race changes to display.", 14, startY + 10);
 			}
 
-			const trackName = document.getElementById('trackName').value;
-			const raceDate = document.getElementById('raceDate').value;
+			//const trackName = document.getElementById('trackName').value;
+			//const raceDate = document.getElementById('raceDate').value;
 			
 			fetch('/json/logos.json')
 			  .then(res => res.json())
