@@ -419,6 +419,90 @@ app.delete('/admin/users/:username', (req, res) => {
   }
 });
 
+//SETUP FTP USE
+const ftp = require("basic-ftp");
+
+app.get("/ftp-list", async (req, res) => {
+  const client = new ftp.Client();
+  client.ftp.verbose = false;
+
+  try {
+    await client.access({
+      host: "ftp.example.com",
+      user: "username",
+      password: "password",
+      secure: false
+    });
+
+    const list = await client.list();
+    const zipFiles = list
+      .filter(file => file.name.endsWith(".zip"))
+      .map(file => file.name);
+
+    res.json(zipFiles);
+  } catch (err) {
+    console.error("❌ FTP error:", err);
+    res.status(500).json({ error: "Failed to connect to FTP" });
+  } finally {
+    client.close();
+  }
+});
+
+
+/////SETUP ROUTES
+const unzipper = require("unzipper"); // npm install unzipper
+const os = require("os");
+
+app.post("/ftp-download", async (req, res) => {
+  const { filename } = req.body;
+  if (!filename) return res.status(400).json({ error: "Missing filename" });
+
+  const client = new ftp.Client();
+  const tempPath = path.join(os.tmpdir(), filename);
+
+  try {
+    await client.access({
+      host: "ftp.example.com",
+      user: "username",
+      password: "password",
+      secure: false
+    });
+
+    await client.downloadTo(tempPath, filename);
+    client.close();
+
+    // ✅ Wrap unzip logic in try-catch to prevent crash
+    try {
+      const stream = fs.createReadStream(tempPath).pipe(unzipper.ParseOne());
+      let chunks = [];
+
+      stream.on("data", chunk => chunks.push(chunk));
+      stream.on("end", () => {
+        try {
+          const content = Buffer.concat(chunks).toString("utf8");
+          const json = JSON.parse(content); // may throw
+          res.json(json);
+        } catch (parseErr) {
+          console.error("❌ JSON parse error:", parseErr);
+          res.status(400).json({ error: "Extracted file is not valid JSON." });
+        }
+      });
+
+      stream.on("error", err => {
+        console.error("❌ Unzip error:", err);
+        res.status(500).json({ error: "Failed to extract file." });
+      });
+    } catch (unzipErr) {
+      console.error("❌ Unzip exception:", unzipErr);
+      res.status(500).json({ error: "Error during unzip operation." });
+    }
+
+  } catch (err) {
+    console.error("❌ FTP download error:", err);
+    res.status(500).json({ error: "Failed to download file" });
+  }
+});
+
 
 
 
