@@ -1217,7 +1217,7 @@ function fetchFtpFiles() {
   const ftpUsername = document.getElementById("ftpUsername").value;
   const ftpPassword = document.getElementById("ftpPassword").value;
 
-  fetch("/ftp/list", {
+  fetch("/ftp-list", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ftpUrl, ftpUsername, ftpPassword })
@@ -1252,7 +1252,7 @@ function downloadSelectedFtpFile() {
 
   if (!file) return alert("Please select a file.");
 
-  fetch("/ftp/download", {
+  fetch("/ftp-download", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ftpUrl, ftpUsername, ftpPassword, file })
