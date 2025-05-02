@@ -345,7 +345,7 @@
 				data.push({
 					raceNumber: raceNumber.toString(),
 					saddlePad: saddlePad ? saddlePad.toString() : "",
-					horseName,
+					horseName: horseName || "",
 					category,
 					change: changeText
 				});
