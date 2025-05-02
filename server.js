@@ -20,6 +20,8 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(express.static(__dirname));
 
+app.use('/logos', express.static(path.join(__dirname, 'logos')));
+
 // ✅ Ensure JSON directory exists
 if (!fs.existsSync(JSON_DIR)) {
     fs.mkdirSync(JSON_DIR, { recursive: true });
