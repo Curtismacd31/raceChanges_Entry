@@ -309,7 +309,7 @@
 			tableBody.innerHTML = ""; // ✅ Clear previous table content
 
 			raceChanges.forEach(entry => {
-				if (!entry.raceNumber || !entry.saddlePad || !entry.category) {
+				if (!entry.raceNumber || !entry.category) {
 					console.warn("⚠ Skipping invalid entry:", entry);
 					return;
 				}
