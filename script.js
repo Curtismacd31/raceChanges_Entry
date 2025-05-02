@@ -340,7 +340,16 @@
 				let category = row.querySelector(".changeCategory").value;
 				let changeText = row.querySelector(".changeText").value;
 		
-				if (!raceNumber || !category) return;
+				if (category && raceNumber) {
+					data.push({
+						raceNumber: raceNumber.toString(),
+						saddlePad: saddlePad ? saddlePad.toString() : "",
+						horseName: horseName || "",
+						category,
+						change: changeText
+					});
+				}
+
 		
 				data.push({
 					raceNumber: raceNumber.toString(),
