@@ -97,14 +97,18 @@ app.post('/api/:filename', (req, res) => {
 
     const insertMany = db.transaction((rows) => {
         for (const c of rows) {
-            console.log("👉 inserting:", c);
+            if (!c.raceNumber || !c.category || !c.change) {
+                console.log("⚠️ Skipping incomplete row:", c);
+                continue; // Skip invalid entries
+            }
+    
             insert.run(
                 track,
                 date,
                 c.raceNumber,
                 c.saddlePad || '',
                 c.horseName || '',
-                c.category || '',
+                c.category,
                 c.change,
                 trackCondition || '',
                 weather || '',
@@ -112,6 +116,7 @@ app.post('/api/:filename', (req, res) => {
             );
         }
     });
+
 
     try {
         insertMany(changes);
