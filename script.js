@@ -598,6 +598,32 @@
 				doc.text("No valid race changes to display.", 14, startY + 10);
 			}
 
+			const trackName = document.getElementById('trackName').value;
+			fetch('/json/logos.json')
+			  .then(res => res.json())
+			  .then(logos => {
+			    const logoPath = logos[trackName];
+			    if (!logoPath) return doc.save(`Race_Changes_${trackName}_${raceDate}.pdf`);
+			
+			    const img = new Image();
+			    img.src = logoPath;
+			    img.onload = () => {
+			      const imgWidth = 40; // Adjust as needed
+			      const imgHeight = (img.height / img.width) * imgWidth;
+			      doc.addImage(img, 'PNG', 160, 10, imgWidth, imgHeight);
+			      doc.save(`Race_Changes_${trackName}_${raceDate}.pdf`);
+			    };
+			    img.onerror = () => {
+			      console.warn("⚠️ Logo image failed to load.");
+			      doc.save(`Race_Changes_${trackName}_${raceDate}.pdf`);
+			    };
+			  })
+			  .catch(() => {
+			    console.warn("⚠️ Failed to load logos.json");
+			    doc.save(`Race_Changes_${trackName}_${raceDate}.pdf`);
+			  });
+
+
 			doc.save(`Race_Changes_${trackName}_${raceDate}.pdf`);
 			saveData();
 		}
