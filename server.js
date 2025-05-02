@@ -97,7 +97,7 @@ app.post('/api/:filename', (req, res) => {
 
     const insertMany = db.transaction((rows) => {
         for (const c of rows) {
-            if (!c.raceNumber || !c.category || !c.change) {
+            if (!c.raceNumber) {
                 console.log("⚠️ Skipping incomplete row:", c);
                 continue; // Skip invalid entries
             }
