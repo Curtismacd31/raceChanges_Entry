@@ -115,6 +115,41 @@
 			}
 		}
 
+		/////////////////////////////////////////////////////////////////////////////////////////////////////
+		//FTP
+		function listFtpFiles() {
+		  fetch("/ftp-list")
+		    .then(res => res.json())
+		    .then(files => {
+		      const dropdown = document.getElementById("ftpFileDropdown");
+		      dropdown.innerHTML = "";
+		      files.forEach(f => {
+		        const opt = document.createElement("option");
+		        opt.value = f;
+		        opt.textContent = f;
+		        dropdown.appendChild(opt);
+		      });
+		    });
+		}
+		
+		function loadSelectedFtpFile() {
+		  const selected = document.getElementById("ftpFileDropdown").value;
+		  if (!selected) return alert("No file selected.");
+		
+		  fetch("/ftp-download", {
+		    method: "POST",
+		    headers: { "Content-Type": "application/json" },
+		    body: JSON.stringify({ filename: selected })
+		  })
+		    .then(res => res.json())
+		    .then(json => {
+		      // Assume it's a valid entries.json or changes.json
+		      console.log("✅ FTP JSON loaded:", json);
+		      loadExistingData(json.changes || []);
+		    });
+		}
+
+
 		///////////////////////////////////////////////////////////////////
 		//LOCK IF LOGGED IN ALREADY
 		function lockTrack(trackName, raceDate, userCode) {
