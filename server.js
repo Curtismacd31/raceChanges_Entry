@@ -7,6 +7,8 @@ const cors = require('cors');
 const axios = require("axios");
 const xml2js = require("xml2js");
 const Database = require('better-sqlite3');
+require('dotenv').config();
+
 
 const app = express();
 const JSON_DIR = path.join(__dirname, "json");
@@ -428,11 +430,12 @@ app.get("/ftp-list", async (req, res) => {
 
   try {
     await client.access({
-      host: "ftp.example.com",
-      user: "username",
-      password: "password",
+      host: process.env.FTP_HOST,
+      user: process.env.FTP_USER,
+      password: process.env.FTP_PASS,
       secure: false
     });
+
 
     const list = await client.list();
     const zipFiles = list
