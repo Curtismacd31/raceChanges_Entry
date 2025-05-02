@@ -419,6 +419,36 @@ app.delete('/admin/users/:username', (req, res) => {
   }
 });
 
+//SETUP FTP USE
+const ftp = require("basic-ftp");
+
+app.get("/ftp-list", async (req, res) => {
+  const client = new ftp.Client();
+  client.ftp.verbose = false;
+
+  try {
+    await client.access({
+      host: "ftp.example.com",
+      user: "username",
+      password: "password",
+      secure: false
+    });
+
+    const list = await client.list();
+    const zipFiles = list
+      .filter(file => file.name.endsWith(".zip"))
+      .map(file => file.name);
+
+    res.json(zipFiles);
+  } catch (err) {
+    console.error("❌ FTP error:", err);
+    res.status(500).json({ error: "Failed to connect to FTP" });
+  } finally {
+    client.close();
+  }
+});
+
+
 
 // ✅ Start
 const PORT = process.env.PORT || 3000;
