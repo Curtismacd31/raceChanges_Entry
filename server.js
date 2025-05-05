@@ -537,10 +537,45 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
     }
 
 //CREATE DISPLAY ROUTE.
-const logoMap = JSON.parse(fs.readFileSync(path.join(__dirname, 'json', 'logos.json')));
-const logoPath = logoMap[track];
+//const logoMap = JSON.parse(fs.readFileSync(path.join(__dirname, 'json', 'logos.json')));
+//const logoPath = logoMap[track];
+app.get('/get-api/display/:track/:date', async (req, res) => {
+  const track = decodeURIComponent(req.params.track);
+  const date = decodeURIComponent(req.params.date);
 
-      
+  try {
+    const rows = db.prepare(`
+      SELECT raceNumber, saddlePad, horseName, category, change,
+             trackCondition, weather, variant
+      FROM changes
+      WHERE track = ? AND date = ?
+      ORDER BY
+        CAST(SUBSTR(raceNumber, INSTR(raceNumber, ' ') + 1) AS INTEGER),
+        CAST(saddlePad AS INTEGER)
+    `).all(track, date);
+
+    if (!rows.length) {
+      return res.status(404).send(`<h2>No changes found for ${track} on ${date}.</h2>`);
+    }
+
+    const { trackCondition, weather, variant } = rows[0];
+
+    // Group changes by race
+    const grouped = {};
+    for (const row of rows) {
+      if (!grouped[row.raceNumber]) grouped[row.raceNumber] = [];
+      grouped[row.raceNumber].push(row);
+    }
+
+    // Get logo
+    let logoPath = '';
+    try {
+      const logoMap = JSON.parse(fs.readFileSync(path.join(__dirname, 'json', 'logos.json'), 'utf8'));
+      logoPath = logoMap[track] || '';
+    } catch (err) {
+      console.warn("⚠️ Failed to load logos.json or no logo for track.");
+    }
+
     const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -575,7 +610,7 @@ const logoPath = logoMap[track];
     }
     .meta {
       font-size: 14px;
-      color: #555;
+      color: #bbb;
       margin-top: 10px;
       margin-bottom: 30px;
     }
@@ -622,36 +657,40 @@ const logoPath = logoMap[track];
     ${logoPath ? `<img src="${logoPath}" alt="Logo">` : ''}
   </header>
   <main>
-    ${Object.entries(grouped).map(([race, entries]) => `
-      <div class="race-section">
-        <h2>${race}</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Saddle Pad</th>
-              <th>Horse Name</th>
-              <th>Category</th>
-              <th>Change</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${entries.map(e => `
-              <tr>
-                <td>${e.saddlePad || ""}</td>
-                <td>${e.horseName || ""}</td>
-                <td>${e.category || ""}</td>
-                <td>${e.change || ""}</td>
-              </tr>
-            `).join("")}
-          </tbody>
-        </table>
-      </div>
-    `).join("")}
+    ${Object.entries(grouped).map(([race, entries]) => {
+      const isNoChanges = entries.length === 1 && entries[0].change?.toUpperCase() === "NO CHANGES";
+      return `
+        <div class="race-section">
+          <h2>${race}${isNoChanges ? ' - <strong>NO CHANGES</strong>' : ''}</h2>
+          ${!isNoChanges ? `
+            <table>
+              <thead>
+                <tr>
+                  <th>Saddle Pad</th>
+                  <th>Horse Name</th>
+                  <th>Category</th>
+                  <th>Change</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${entries.map(e => `
+                  <tr>
+                    <td>${e.saddlePad || ""}</td>
+                    <td>${e.horseName || ""}</td>
+                    <td>${e.category || ""}</td>
+                    <td>${e.change || ""}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          ` : ""}
+        </div>
+      `;
+    }).join("")}
   </main>
 </body>
 </html>
 `;
-
 
     res.send(html);
   } catch (e) {
