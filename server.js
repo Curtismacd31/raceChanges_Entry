@@ -537,7 +537,7 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
       grouped[row.raceNumber].push(row);
     }
 
-    // Read logos.json safely inside route
+    // Load logo
     let logoPath = '';
     try {
       const logoMap = JSON.parse(fs.readFileSync(path.join(__dirname, 'json', 'logos.json'), 'utf8'));
@@ -546,7 +546,20 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
       console.warn("⚠️ Could not load logos.json or logo not found.");
     }
 
-    // Render HTML
+    // Saddle pad colors
+    const saddlePadColors = {
+      "1": "#ffffff",
+      "2": "#ff0000",
+      "3": "#0033cc",
+      "4": "#ffff00",
+      "5": "#00cc00",
+      "6": "#ff9900",
+      "7": "#ff66cc",
+      "8": "#999999",
+      "9": "#660099",
+      "10": "linear-gradient(to right, #ff0000 50%, #0033cc 50%)",
+    };
+
     const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -612,6 +625,10 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
     tr:nth-child(even) {
       background: #fafafa;
     }
+    .pad {
+      font-weight: bold;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -644,14 +661,18 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
                 </tr>
               </thead>
               <tbody>
-                ${entries.map(e => `
-                  <tr>
-                    <td>${e.saddlePad || ""}</td>
-                    <td>${e.horseName || ""}</td>
-                    <td>${e.category || ""}</td>
-                    <td>${e.change || ""}</td>
-                  </tr>
-                `).join("")}
+                ${entries.map(e => {
+                  const bg = saddlePadColors[e.saddlePad?.trim()] || "#eee";
+                  const style = bg.startsWith("linear") ? `background: ${bg};` : `background: ${bg}; color: #000;`;
+                  return `
+                    <tr>
+                      <td class="pad" style="${style}">${e.saddlePad || ""}</td>
+                      <td>${e.horseName || ""}</td>
+                      <td>${e.category || ""}</td>
+                      <td>${e.change || ""}</td>
+                    </tr>
+                  `;
+                }).join("")}
               </tbody>
             </table>
           ` : ""}
@@ -669,6 +690,7 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
     res.status(500).send(`<h2>Internal Server Error</h2>`);
   }
 });
+
 
 
 
