@@ -540,7 +540,7 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
 
     let logoPath = '';
     try {
-      const logoMap = JSON.parse(fs.readFileSync(path.join(__dirname, 'json', 'json\logos.json'), 'utf8'));
+      const logoMap = JSON.parse(fs.readFileSync(path.join(__dirname, 'json', 'json\\logos.json'), 'utf8'));
       logoPath = logoMap[track] || '';
     } catch (e) {
       console.warn("⚠️ Could not load logos.json or logo not found.");
