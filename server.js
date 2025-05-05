@@ -572,6 +572,7 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
 <head>
   <meta charset="UTF-8">
   <title>Race Changes - ${track} - ${date}</title>
+  <meta http-equiv="refresh" content="10">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -662,8 +663,8 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
           return `
             <div class="change-line">
               ${hasPad ? `
-                <div class="pad" style="background: ${padColor}; color: ${fontColor};">${e.saddlePad}</div>
-              ` : `<div class="pad" style="width:32px;height:32px;"></div>`}
+                <div class="pad" style="${padNum === 10 ? `background: ${padColor};` : `background-color: ${padColor}; color: ${fontColor};`}">${e.saddlePad}</div>
+              ` : `<div class="pad"></div>`}
               <div class="text">
                 ${e.horseName ? `<span class="horse">${e.horseName}</span>` : ""}
                 ${e.category ? `${e.category.toUpperCase()}:` : ""} ${e.change || ""}
@@ -684,6 +685,7 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
     res.status(500).send(`<h2>Internal Server Error</h2>`);
   }
 });
+
 
 
 
