@@ -530,14 +530,12 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
 
     const { trackCondition, weather, variant } = rows[0];
 
-    // Group changes by race
     const grouped = {};
     for (const row of rows) {
       if (!grouped[row.raceNumber]) grouped[row.raceNumber] = [];
       grouped[row.raceNumber].push(row);
     }
 
-    // Load logo
     let logoPath = '';
     try {
       const logoMap = JSON.parse(fs.readFileSync(path.join(__dirname, 'json', 'logos.json'), 'utf8'));
@@ -557,7 +555,7 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
         7: '#7F00FF', // Purple
         8: '#808080', // Grey
         9: '#FF8C00', // Orange
-        10: 'linear-gradient(to right, red 50%, blue 50%)',
+        10: 'linear-gradient(to right, red 50%, blue 50%)'
       };
       return map[num] || '#000';
     };
@@ -593,7 +591,7 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
     .meta {
       margin: 10px 0 30px 0;
       font-size: 14px;
-      color: #666;
+      color: #ccc;
     }
     .race-section {
       margin-bottom: 40px;
@@ -605,19 +603,32 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
       padding-bottom: 5px;
     }
     .change-line {
-      margin: 6px 0;
-      padding-left: 5px;
+      display: flex;
+      align-items: center;
+      margin: 8px 0;
     }
     .pad {
-      display: inline-block;
-      width: 18px;
-      height: 18px;
-      border-radius: 3px;
-      vertical-align: middle;
-      margin-right: 8px;
+      width: 26px;
+      height: 26px;
+      border-radius: 4px;
+      color: #fff;
+      font-weight: bold;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+    .half10 {
+      background: linear-gradient(to right, red 50%, blue 50%);
+    }
+    .text {
+      flex: 1;
     }
     .horse {
       font-weight: bold;
+      margin-right: 5px;
     }
   </style>
 </head>
@@ -632,7 +643,7 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
         <div><strong>Variant:</strong> ${variant}</div>
       </div>
     </div>
-    ${logoPath ? `<img src="${logoPath}" alt="Track Logo">` : ''}
+    ${logoPath ? `<img src="${logoPath}" alt="Logo">` : ''}
   </header>
 
   ${Object.entries(grouped).map(([race, entries]) => {
@@ -641,14 +652,21 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
       <div class="race-section">
         <h2>${race}${isNoChanges ? ' - <strong>NO CHANGES</strong>' : ''}</h2>
         ${!isNoChanges ? entries.map(e => {
-          const color = getColor(parseInt(e.saddlePad));
-          const padStyle = e.saddlePad === "10" ? `background: ${color};` : `background-color: ${color};`;
+          if (!e.saddlePad || !e.horseName) return '';
+          const padColor = getColor(parseInt(e.saddlePad));
+          const padStyle = parseInt(e.saddlePad) === 10
+            ? `background: ${padColor};`
+            : `background-color: ${padColor};`;
+
           return `
             <div class="change-line">
-              <span class="pad" style="${padStyle}"></span>
-              <span class="horse">${e.horseName || "Unnamed"}</span>
-              ${e.category ? `${e.category.toUpperCase()}:` : ""} ${e.change || ""}
-            </div>`;
+              <div class="pad" style="${padStyle}">${e.saddlePad}</div>
+              <div class="text">
+                <span class="horse">${e.horseName}</span>
+                ${e.category ? `${e.category.toUpperCase()}:` : ""} ${e.change || ""}
+              </div>
+            </div>
+          `;
         }).join("") : ""}
       </div>
     `;
@@ -663,6 +681,7 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
     res.status(500).send(`<h2>Internal Server Error</h2>`);
   }
 });
+
 
 
 
