@@ -590,7 +590,7 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
       padding: 20px 30px;
     }
     header img {
-      height: 50px;
+      height: 100px;
     }
     h1 {
       margin: 0;
