@@ -567,15 +567,16 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
       grouped[row.raceNumber].push(row);
     }
 
-    // Get logo
+    // Read logos.json safely inside route
     let logoPath = '';
     try {
       const logoMap = JSON.parse(fs.readFileSync(path.join(__dirname, 'json', 'logos.json'), 'utf8'));
       logoPath = logoMap[track] || '';
-    } catch (err) {
-      console.warn("⚠️ Failed to load logos.json or no logo for track.");
+    } catch (e) {
+      console.warn("⚠️ Could not load logos.json or logo not found.");
     }
 
+    // Render HTML
     const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -698,6 +699,7 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
     res.status(500).send(`<h2>Internal Server Error</h2>`);
   }
 });
+
 
 
 
