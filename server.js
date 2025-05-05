@@ -546,18 +546,20 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
       console.warn("⚠️ Could not load logos.json or logo not found.");
     }
 
-    // Saddle pad colors
-    const saddlePadColors = {
-      "1": "#ffffff",
-      "2": "#ff0000",
-      "3": "#0033cc",
-      "4": "#ffff00",
-      "5": "#00cc00",
-      "6": "#ff9900",
-      "7": "#ff66cc",
-      "8": "#999999",
-      "9": "#660099",
-      "10": "linear-gradient(to right, #ff0000 50%, #0033cc 50%)",
+    const getColor = (num) => {
+      const map = {
+        1: '#FF0000', // Red
+        2: '#0000FF', // Blue
+        3: '#FFFF00', // Yellow
+        4: '#008000', // Green
+        5: '#FF69B4', // Pink
+        6: '#A52A2A', // Brown
+        7: '#7F00FF', // Purple
+        8: '#808080', // Grey
+        9: '#FF8C00', // Orange
+        10: 'linear-gradient(to right, red 50%, blue 50%)',
+      };
+      return map[num] || '#000';
     };
 
     const html = `
@@ -569,65 +571,53 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #f9f9f9;
+      background: #f4f4f4;
+      padding: 30px;
       margin: 0;
-      padding: 0;
       color: #333;
     }
     header {
-      background: #222;
-      color: #fff;
-      padding: 20px 30px;
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
+      background: #222;
+      color: white;
+      padding: 20px 30px;
     }
     header img {
       height: 50px;
     }
-    main {
-      padding: 30px;
-    }
     h1 {
       margin: 0;
-      font-size: 28px;
     }
     .meta {
+      margin: 10px 0 30px 0;
       font-size: 14px;
-      color: #bbb;
-      margin-top: 10px;
-      margin-bottom: 30px;
+      color: #666;
     }
     .race-section {
       margin-bottom: 40px;
     }
     .race-section h2 {
       font-size: 20px;
-      margin-bottom: 10px;
-      border-bottom: 2px solid #ccc;
+      margin-bottom: 15px;
+      border-bottom: 1px solid #ccc;
       padding-bottom: 5px;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #fff;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-    th, td {
-      padding: 12px 10px;
-      border: 1px solid #ddd;
-    }
-    th {
-      background: #f2f2f2;
-      text-align: left;
-      font-weight: 600;
-    }
-    tr:nth-child(even) {
-      background: #fafafa;
+    .change-line {
+      margin: 6px 0;
+      padding-left: 5px;
     }
     .pad {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border-radius: 3px;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    .horse {
       font-weight: bold;
-      text-align: center;
     }
   </style>
 </head>
@@ -642,44 +632,27 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
         <div><strong>Variant:</strong> ${variant}</div>
       </div>
     </div>
-    ${logoPath ? `<img src="${logoPath}" alt="Logo">` : ''}
+    ${logoPath ? `<img src="${logoPath}" alt="Track Logo">` : ''}
   </header>
-  <main>
-    ${Object.entries(grouped).map(([race, entries]) => {
-      const isNoChanges = entries.length === 1 && entries[0].change?.toUpperCase() === "NO CHANGES";
-      return `
-        <div class="race-section">
-          <h2>${race}${isNoChanges ? ' - <strong>NO CHANGES</strong>' : ''}</h2>
-          ${!isNoChanges ? `
-            <table>
-              <thead>
-                <tr>
-                  <th>Saddle Pad</th>
-                  <th>Horse Name</th>
-                  <th>Category</th>
-                  <th>Change</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${entries.map(e => {
-                  const bg = saddlePadColors[e.saddlePad?.trim()] || "#eee";
-                  const style = bg.startsWith("linear") ? `background: ${bg};` : `background: ${bg}; color: #000;`;
-                  return `
-                    <tr>
-                      <td class="pad" style="${style}">${e.saddlePad || ""}</td>
-                      <td>${e.horseName || ""}</td>
-                      <td>${e.category || ""}</td>
-                      <td>${e.change || ""}</td>
-                    </tr>
-                  `;
-                }).join("")}
-              </tbody>
-            </table>
-          ` : ""}
-        </div>
-      `;
-    }).join("")}
-  </main>
+
+  ${Object.entries(grouped).map(([race, entries]) => {
+    const isNoChanges = entries.length === 1 && entries[0].change?.toUpperCase() === "NO CHANGES";
+    return `
+      <div class="race-section">
+        <h2>${race}${isNoChanges ? ' - <strong>NO CHANGES</strong>' : ''}</h2>
+        ${!isNoChanges ? entries.map(e => {
+          const color = getColor(parseInt(e.saddlePad));
+          const padStyle = e.saddlePad === "10" ? `background: ${color};` : `background-color: ${color};`;
+          return `
+            <div class="change-line">
+              <span class="pad" style="${padStyle}"></span>
+              <span class="horse">${e.horseName || "Unnamed"}</span>
+              ${e.category ? `${e.category.toUpperCase()}:` : ""} ${e.change || ""}
+            </div>`;
+        }).join("") : ""}
+      </div>
+    `;
+  }).join("")}
 </body>
 </html>
 `;
@@ -690,7 +663,6 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
     res.status(500).send(`<h2>Internal Server Error</h2>`);
   }
 });
-
 
 
 
