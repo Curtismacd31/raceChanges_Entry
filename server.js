@@ -548,13 +548,13 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
       const map = {
         1: '#FF0000', // Red
         2: '#0000FF', // Blue
-        3: '#FFFF00', // Yellow
+        3: '#000000', // White
         4: '#008000', // Green
-        5: '#FF69B4', // Pink
-        6: '#A52A2A', // Brown
-        7: '#7F00FF', // Purple
+        5: '#FFFFFF', // Black
+        6: '#FFFF00', // Yellow
+        7: '#7F00FF', // Pink
         8: '#808080', // Grey
-        9: '#FF8C00', // Orange
+        9: '#FF69B4', // Purple
         10: 'linear-gradient(to right, red 50%, blue 50%)'
       };
       return map[num] || '#000';
