@@ -546,18 +546,11 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
 
     const getColor = (num) => {
       const map = {
-        1: '#FF0000', // Red
-        2: '#0000FF', // Blue
-        3: '#000000', // White
-        4: '#008000', // Green
-        5: '#FFFFFF', // Black
-        6: '#FFFF00', // Yellow
-        7: '#7F00FF', // Pink
-        8: '#808080', // Grey
-        9: '#FF69B4', // Purple
-        10: 'linear-gradient(to right, red 50%, blue 50%)'
+        1: '#FF0000', 2: '#0000FF', 3: '#FFFF00', 4: '#008000',
+        5: '#FF69B4', 6: '#A52A2A', 7: '#7F00FF', 8: '#808080',
+        9: '#FF8C00', 10: 'linear-gradient(to right, red 50%, blue 50%)'
       };
-      return map[num] || '#000';
+      return map[num] || '#444';
     };
 
     const html = `
@@ -567,69 +560,18 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
   <meta charset="UTF-8">
   <title>Race Changes - ${track} - ${date}</title>
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f4f4f4;
-      padding: 30px;
-      margin: 0;
-      color: #333;
-    }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #222;
-      color: white;
-      padding: 20px 30px;
-    }
-    header img {
-      height: 50px;
-    }
-    h1 {
-      margin: 0;
-    }
-    .meta {
-      margin: 10px 0 30px 0;
-      font-size: 14px;
-      color: #ccc;
-    }
-    .race-section {
-      margin-bottom: 40px;
-    }
-    .race-section h2 {
-      font-size: 20px;
-      margin-bottom: 15px;
-      border-bottom: 1px solid #ccc;
-      padding-bottom: 5px;
-    }
-    .change-line {
-      display: flex;
-      align-items: center;
-      margin: 8px 0;
-    }
-    .pad {
-      width: 26px;
-      height: 26px;
-      border-radius: 4px;
-      color: #fff;
-      font-weight: bold;
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: 10px;
-      flex-shrink: 0;
-    }
-    .half10 {
-      background: linear-gradient(to right, red 50%, blue 50%);
-    }
-    .text {
-      flex: 1;
-    }
-    .horse {
-      font-weight: bold;
-      margin-right: 5px;
-    }
+    body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; padding: 30px; margin: 0; color: #333; }
+    header { display: flex; justify-content: space-between; align-items: center; background: #222; color: white; padding: 20px 30px; }
+    header img { height: 50px; }
+    h1 { margin: 0; }
+    .meta { margin: 10px 0 30px 0; font-size: 14px; color: #ccc; }
+    .race-section { margin-bottom: 40px; }
+    .race-section h2 { font-size: 20px; margin-bottom: 15px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+    .change-line { display: flex; align-items: center; margin: 8px 0; }
+    .pad { width: 32px; height: 32px; border-radius: 4px; color: #fff; font-weight: bold; font-size: 14px; display: flex; align-items: center; justify-content: center; margin-right: 10px; flex-shrink: 0; }
+    .text { flex: 1; }
+    .horse { font-weight: bold; margin-right: 5px; }
+    .other-text { margin-left: 42px; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -652,18 +594,23 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
       <div class="race-section">
         <h2>${race}${isNoChanges ? ' - <strong>NO CHANGES</strong>' : ''}</h2>
         ${!isNoChanges ? entries.map(e => {
-          if (!e.saddlePad || !e.horseName) return '';
+          if (!e.change) return "";
+
+          if (!e.saddlePad && !e.horseName) {
+            return `<div class="other-text">${e.category?.toUpperCase() || 'NOTE'}: ${e.change}</div>`;
+          }
+
           const padColor = getColor(parseInt(e.saddlePad));
-          const padStyle = parseInt(e.saddlePad) === 10
+          const padStyle = (parseInt(e.saddlePad) === 10)
             ? `background: ${padColor};`
             : `background-color: ${padColor};`;
 
           return `
             <div class="change-line">
-              <div class="pad" style="${padStyle}">${e.saddlePad}</div>
+              ${e.saddlePad ? `<div class="pad" style="${padStyle}">${e.saddlePad}</div>` : `<div class="pad" style="background:#ccc;"></div>`}
               <div class="text">
-                <span class="horse">${e.horseName}</span>
-                ${e.category ? `${e.category.toUpperCase()}:` : ""} ${e.change || ""}
+                ${e.horseName ? `<span class="horse">${e.horseName}</span>` : ""}
+                ${e.category ? `${e.category.toUpperCase()}:` : ""} ${e.change}
               </div>
             </div>
           `;
@@ -681,6 +628,7 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
     res.status(500).send(`<h2>Internal Server Error</h2>`);
   }
 });
+
 
 
 
