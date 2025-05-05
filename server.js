@@ -508,6 +508,93 @@ app.post("/ftp-download", async (req, res) => {
   }
 });
 
+app.get('/get-api/display/:track/:date', async (req, res) => {
+  const track = decodeURIComponent(req.params.track);
+  const date = decodeURIComponent(req.params.date);
+
+  try {
+    const rows = db.prepare(`
+      SELECT raceNumber, saddlePad, horseName, category, change,
+             trackCondition, weather, variant
+      FROM changes
+      WHERE track = ? AND date = ?
+      ORDER BY
+        CAST(SUBSTR(raceNumber, INSTR(raceNumber, ' ') + 1) AS INTEGER),
+        CAST(saddlePad AS INTEGER)
+    `).all(track, date);
+
+    if (!rows.length) {
+      return res.status(404).send(`<h2>No changes found for ${track} on ${date}.</h2>`);
+    }
+
+    const { trackCondition, weather, variant } = rows[0];
+
+    // Group changes by race
+    const grouped = {};
+    for (const row of rows) {
+      if (!grouped[row.raceNumber]) grouped[row.raceNumber] = [];
+      grouped[row.raceNumber].push(row);
+    }
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Race Changes for ${track} - ${date}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 40px; background: #fff; color: #000; }
+          h1 { margin-bottom: 0; }
+          .meta { margin-bottom: 20px; font-size: 14px; }
+          .race-section { margin-bottom: 30px; }
+          table { width: 100%; border-collapse: collapse; }
+          th, td { border: 1px solid #999; padding: 6px; text-align: left; }
+          th { background-color: #f2f2f2; }
+        </style>
+      </head>
+      <body>
+        <h1>Race Changes - ${track}</h1>
+        <div class="meta">
+          <strong>Date:</strong> ${date}<br>
+          <strong>Track Condition:</strong> ${trackCondition}<br>
+          <strong>Weather:</strong> ${weather}<br>
+          <strong>Variant:</strong> ${variant}
+        </div>
+        ${Object.entries(grouped).map(([race, entries]) => `
+          <div class="race-section">
+            <h2>${race}</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Saddle Pad</th>
+                  <th>Horse Name</th>
+                  <th>Category</th>
+                  <th>Change</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${entries.map(e => `
+                  <tr>
+                    <td>${e.saddlePad || ""}</td>
+                    <td>${e.horseName || ""}</td>
+                    <td>${e.category || ""}</td>
+                    <td>${e.change || ""}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+        `).join("")}
+      </body>
+      </html>
+    `;
+
+    res.send(html);
+  } catch (e) {
+    console.error("❌ Display route error:", e);
+    res.status(500).send(`<h2>Internal Server Error</h2>`);
+  }
+});
 
 
 
