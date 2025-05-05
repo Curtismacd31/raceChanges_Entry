@@ -129,6 +129,23 @@
     </style>
 </head>
 <body>
+
+<!-- Display Viewer (Always Visible) -->
+<div class="container" id="displayLaunchTab" style="margin-bottom: 30px; border-bottom: 2px solid #ccc; padding-bottom: 20px;">
+  <h2>View Display Page</h2>
+  <label for="trackSelect">Track:</label>
+  <select id="trackSelect" onchange="populateDates()">
+    <option value="">Select track...</option>
+  </select>
+
+  <label for="dateSelect">Date:</label>
+  <select id="dateSelect">
+    <option value="">Select date...</option>
+  </select>
+
+  <button onclick="openDisplayPage()">Open Display</button>
+</div>
+
     <!-- Login Section -->
     <div class="login-container" id="loginPage">
         <h2>Enter Track Password</h2>
@@ -254,6 +271,48 @@
             document.getElementById("tabs").classList.remove("hidden");
             showTab("raceChangesTab"); // Default to Main tab
         }
+
+	let availableChanges = {};
+
+	fetch('/json/changes_index.json')
+	  .then(res => res.json())
+	  .then(data => {
+	    availableChanges = data;
+	    const trackSelect = document.getElementById('trackSelect');
+	    Object.keys(data).forEach(track => {
+	      const opt = document.createElement('option');
+	      opt.value = track;
+	      opt.textContent = track;
+	      trackSelect.appendChild(opt);
+	    });
+	  });
+	
+	function populateDates() {
+	  const track = document.getElementById('trackSelect').value;
+	  const dateSelect = document.getElementById('dateSelect');
+	  dateSelect.innerHTML = '<option value="">Select date...</option>';
+	
+	  if (track && availableChanges[track]) {
+	    availableChanges[track].forEach(date => {
+	      const opt = document.createElement('option');
+	      opt.value = date;
+	      opt.textContent = date;
+	      dateSelect.appendChild(opt);
+	    });
+	  }
+	}
+	
+	function openDisplayPage() {
+	  const track = document.getElementById('trackSelect').value;
+	  const date = document.getElementById('dateSelect').value;
+	  if (track && date) {
+	    const encodedTrack = encodeURIComponent(track);
+	    window.open(`/get-api/display/${encodedTrack}/${date}`, '_blank');
+	  } else {
+	    alert("Please select both a track and a date.");
+	  }
+	}
+
     </script>
 </body>
 <script src="script.js"></script>
