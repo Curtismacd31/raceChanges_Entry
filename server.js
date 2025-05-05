@@ -253,68 +253,6 @@ app.post("/save-entries", (req, res) => {
 });
 
 
-const fs = require('fs');
-const path = require('path');
-const Database = require('better-sqlite3');
-
-const db = new Database(path.join(__dirname, 'race_changes.db'));
-const outputPath = path.join(__dirname, 'json', 'changes_index.json');
-
-const rows = db.prepare(`
-  SELECT DISTINCT track, date
-  FROM changes
-  ORDER BY track, date
-`).all();
-
-const index = {};
-for (const row of rows) {
-  if (!index[row.track]) {
-    index[row.track] = [];
-  }
-  if (!index[row.track].includes(row.date)) {
-    index[row.track].push(row.date);
-  }
-}
-
-// Optional: sort dates per track
-for (const track in index) {
-  index[track].sort();
-}
-
-// Write to JSON file
-fs.writeFileSync(outputPath, JSON.stringify(index, null, 2));
-console.log("✅ changes_index.json written to", outputPath);
-
-app.get("/build-changes-index", (req, res) => {
-  try {
-    const rows = db.prepare(`
-      SELECT DISTINCT track, date
-      FROM changes
-      ORDER BY track, date
-    `).all();
-
-    const index = {};
-    for (const row of rows) {
-      if (!index[row.track]) index[row.track] = [];
-      if (!index[row.track].includes(row.date)) index[row.track].push(row.date);
-    }
-
-    for (const track in index) {
-      index[track].sort(); // sort dates
-    }
-
-    const outputPath = path.join(JSON_DIR, "changes_index.json");
-    fs.writeFileSync(outputPath, JSON.stringify(index, null, 2));
-
-    console.log("✅ changes_index.json written.");
-    res.json({ success: true, message: "changes_index.json updated.", data: index });
-  } catch (e) {
-    console.error("❌ Failed to build changes_index.json:", e);
-    res.status(500).json({ success: false, message: "Failed to build index." });
-  }
-});
-
-
 
 // ✅ Get Entries
 app.get("/get-entries", (req, res) => {
