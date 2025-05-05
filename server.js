@@ -537,57 +537,116 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
     }
 
     const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>Race Changes for ${track} - ${date}</title>
-        <style>
-          body { font-family: Arial, sans-serif; margin: 40px; background: #fff; color: #000; }
-          h1 { margin-bottom: 0; }
-          .meta { margin-bottom: 20px; font-size: 14px; }
-          .race-section { margin-bottom: 30px; }
-          table { width: 100%; border-collapse: collapse; }
-          th, td { border: 1px solid #999; padding: 6px; text-align: left; }
-          th { background-color: #f2f2f2; }
-        </style>
-      </head>
-      <body>
-        <h1>Race Changes - ${track}</h1>
-        <div class="meta">
-          <strong>Date:</strong> ${date}<br>
-          <strong>Track Condition:</strong> ${trackCondition}<br>
-          <strong>Weather:</strong> ${weather}<br>
-          <strong>Variant:</strong> ${variant}
-        </div>
-        ${Object.entries(grouped).map(([race, entries]) => `
-          <div class="race-section">
-            <h2>${race}</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th>Saddle Pad</th>
-                  <th>Horse Name</th>
-                  <th>Category</th>
-                  <th>Change</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${entries.map(e => `
-                  <tr>
-                    <td>${e.saddlePad || ""}</td>
-                    <td>${e.horseName || ""}</td>
-                    <td>${e.category || ""}</td>
-                    <td>${e.change || ""}</td>
-                  </tr>
-                `).join("")}
-              </tbody>
-            </table>
-          </div>
-        `).join("")}
-      </body>
-      </html>
-    `;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Race Changes - ${track} - ${date}</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f9f9f9;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    header {
+      background: #222;
+      color: #fff;
+      padding: 20px 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header img {
+      height: 50px;
+    }
+    main {
+      padding: 30px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+    .meta {
+      font-size: 14px;
+      color: #555;
+      margin-top: 10px;
+      margin-bottom: 30px;
+    }
+    .race-section {
+      margin-bottom: 40px;
+    }
+    .race-section h2 {
+      font-size: 20px;
+      margin-bottom: 10px;
+      border-bottom: 2px solid #ccc;
+      padding-bottom: 5px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    th, td {
+      padding: 12px 10px;
+      border: 1px solid #ddd;
+    }
+    th {
+      background: #f2f2f2;
+      text-align: left;
+      font-weight: 600;
+    }
+    tr:nth-child(even) {
+      background: #fafafa;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Race Changes - ${track}</h1>
+      <div class="meta">
+        <div><strong>Date:</strong> ${date}</div>
+        <div><strong>Track Condition:</strong> ${trackCondition}</div>
+        <div><strong>Weather:</strong> ${weather}</div>
+        <div><strong>Variant:</strong> ${variant}</div>
+      </div>
+    </div>
+    ${logoPath ? `<img src="${logoPath}" alt="Logo">` : ''}
+  </header>
+  <main>
+    ${Object.entries(grouped).map(([race, entries]) => `
+      <div class="race-section">
+        <h2>${race}</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Saddle Pad</th>
+              <th>Horse Name</th>
+              <th>Category</th>
+              <th>Change</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${entries.map(e => `
+              <tr>
+                <td>${e.saddlePad || ""}</td>
+                <td>${e.horseName || ""}</td>
+                <td>${e.category || ""}</td>
+                <td>${e.change || ""}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    `).join("")}
+  </main>
+</body>
+</html>
+`;
+
 
     res.send(html);
   } catch (e) {
