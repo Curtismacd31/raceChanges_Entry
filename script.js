@@ -571,10 +571,11 @@
 						'AE1':  { bg: [255, 255, 255], text: [0, 0, 0] } // AE1: White pad with black text
 					};
 
-					let rawPad = entry.saddlePad;
-					let padNum = parseInt(rawPad);
-					let defaultColor = { bg: [50, 205, 50], text: [0, 0, 0] }; // Bright green w/ black text
-					let colorConfig = colors[rawPad] || colors[padNum] || defaultColor;
+					let rawPad = String(entry.saddlePad);  // Always treat as string
+let padNum = /^\d+$/.test(rawPad) ? parseInt(rawPad) : null;
+let defaultColor = { bg: [50, 205, 50], text: [0, 0, 0] };
+let colorConfig = colors[rawPad] || (padNum !== null ? colors[padNum] : null) || defaultColor;
+
 
 
 					if (rawPad === '10') {
