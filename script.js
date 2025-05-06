@@ -573,6 +573,7 @@
 
 					let rawPad = entry.saddlePad;
 					let padNum = parseInt(rawPad);
+					let defaultColor = { bg: [50, 205, 50], text: [0, 0, 0] }; // Bright green w/ black text
 					let colorConfig = colors[rawPad] || colors[padNum] || defaultColor;
 
 
