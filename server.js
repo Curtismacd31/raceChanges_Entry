@@ -656,10 +656,12 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
       <div class="race-section">
         <h2>${race}${isNoChanges ? ' - <strong>NO CHANGES</strong>' : ''}</h2>
         ${!isNoChanges ? entries.map(e => {
-          const padNum = parseInt(e.saddlePad);
-          const padColor = getColor(padNum);
-          const fontColor = getFontColor(padNum);
-          const hasPad = !!e.saddlePad;
+         const isAE1 = e.saddlePad === "AE1";
+         const padNum = isAE1 ? null : parseInt(e.saddlePad);
+         const padColor = isAE1 ? "#FFFFFF" : getColor(padNum);
+         const fontColor = isAE1 ? "#000000" : getFontColor(padNum);
+         const hasPad = !!e.saddlePad;
+
 
           return `
             <div class="change-line">
