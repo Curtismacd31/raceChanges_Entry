@@ -568,6 +568,7 @@
 						10: { bg: [255, 0, 0], text: [255, 255, 255], half: [0, 0, 255] }, // Half Red/Half Blue
 						11: { bg: [173, 216, 230], text: [0, 0, 0] }, // Light Blue
 						12: { bg: [139, 69, 19], text: [255, 255, 255] }, // Brown
+						'AE1': ['#FFFFFF', '#000000'] // AE1: White pad with black text
 					};
 
 					let defaultColor = { bg: [50, 205, 50], text: [0, 0, 0] }; // Lime Green for others
