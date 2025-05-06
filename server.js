@@ -564,7 +564,7 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
     };
 
     const getFontColor = (num) => {
-      return [3, 6, 8].includes(num) ? '#000' : '#fff';
+      return [3, 6, 8, AE1].includes(num) ? '#000' : '#fff';
     };
 
     const html = `
