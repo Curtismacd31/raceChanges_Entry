@@ -552,47 +552,45 @@
 				// ✅ **Add Saddle Pad Color Box**
 				if (entry.saddlePad !== -1) {
 					let saddleX = 37;
-					let saddleY = startY + (rowHeight / 2) - 3; // ✅ Centered vertically
+					let saddleY = startY + (rowHeight / 2) - 3;
 					let squareSize = 6;
-
+				
 					let colors = {
-						1: { bg: [255, 0, 0], text: [255, 255, 255] }, // Red
-						2: { bg: [0, 0, 255], text: [255, 255, 255] }, // Blue
-						3: { bg: [255, 255, 255], text: [0, 0, 0] }, // White
-						4: { bg: [0, 128, 0], text: [255, 255, 255] }, // Green
-						5: { bg: [0, 0, 0], text: [255, 255, 255] }, // Black
-						6: { bg: [255, 255, 0], text: [0, 0, 0] }, // Yellow
-						7: { bg: [255, 105, 180], text: [255, 255, 255] }, // Pink
-						8: { bg: [128, 128, 128], text: [255, 255, 255] }, // Grey
-						9: { bg: [128, 0, 128], text: [255, 255, 255] }, // Purple
-						10: { bg: [255, 0, 0], text: [255, 255, 255], half: [0, 0, 255] }, // Half Red/Half Blue
-						11: { bg: [173, 216, 230], text: [0, 0, 0] }, // Light Blue
-						12: { bg: [139, 69, 19], text: [255, 255, 255] }, // Brown
-						'AE1':  { bg: [255, 255, 255], text: [0, 0, 0] } // AE1: White pad with black text
+						1: { bg: [255, 0, 0], text: [255, 255, 255] },
+						2: { bg: [0, 0, 255], text: [255, 255, 255] },
+						3: { bg: [255, 255, 255], text: [0, 0, 0] },
+						4: { bg: [0, 128, 0], text: [255, 255, 255] },
+						5: { bg: [0, 0, 0], text: [255, 255, 255] },
+						6: { bg: [255, 255, 0], text: [0, 0, 0] },
+						7: { bg: [255, 105, 180], text: [255, 255, 255] },
+						8: { bg: [128, 128, 128], text: [0, 0, 0] },
+						9: { bg: [128, 0, 128], text: [255, 255, 255] },
+						10: { bg: [255, 0, 0], half: [0, 0, 255], text: [255, 255, 255] },
+						'AE1': { bg: [255, 255, 255], text: [0, 0, 0] }
 					};
-
-					let rawPad = String(entry.saddlePad);  // Always treat as string
-let padNum = /^\d+$/.test(rawPad) ? parseInt(rawPad) : null;
-let defaultColor = { bg: [50, 205, 50], text: [0, 0, 0] };
-let colorConfig = colors[rawPad] || (padNum !== null ? colors[padNum] : null) || defaultColor;
-
-
-
-					if (rawPad === '10') {
-							// Half red/blue logic
-							doc.setFillColor(...colorConfig.bg);
-							doc.rect(saddleX, saddleY, squareSize / 2, squareSize, "F");
-							doc.setFillColor(...colorConfig.half);
-							doc.rect(saddleX + squareSize / 2, saddleY, squareSize / 2, squareSize, "F");
-						} else {
-							doc.setFillColor(...colorConfig.bg);
-							doc.rect(saddleX, saddleY, squareSize, squareSize, "F");
-						}
-						doc.setTextColor(...colorConfig.text);
-						doc.setFontSize(6);
-						doc.text(String(rawPad), saddleX + squareSize / 2, saddleY + squareSize / 2 + 1.5, { align: 'center', baseline: 'middle' });
-
+				
+					const rawPad = String(entry.saddlePad).trim();
+					const isSplitPad = rawPad === '10';
+					const colorConfig = colors[rawPad] || colors[parseInt(rawPad)] || { bg: [50, 205, 50], text: [0, 0, 0] };
+				
+					if (isSplitPad) {
+						doc.setFillColor(...colorConfig.bg);
+						doc.rect(saddleX, saddleY, squareSize / 2, squareSize, "F");
+						doc.setFillColor(...colorConfig.half);
+						doc.rect(saddleX + squareSize / 2, saddleY, squareSize / 2, squareSize, "F");
+					} else {
+						doc.setFillColor(...colorConfig.bg);
+						doc.rect(saddleX, saddleY, squareSize, squareSize, "F");
+					}
+				
+					doc.setTextColor(...colorConfig.text);
+					doc.setFontSize(7);
+					doc.text(rawPad, saddleX + squareSize / 2, saddleY + squareSize / 2 + 2, {
+						align: 'center',
+						baseline: 'middle'
+					});
 				}
+
 
 				doc.setDrawColor(0, 0, 0);
 				doc.line(14, startY + rowHeight, 184, startY + rowHeight);
