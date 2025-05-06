@@ -571,22 +571,25 @@
 						'AE1':  { bg: [255, 255, 255], text: [0, 0, 0] } // AE1: White pad with black text
 					};
 
-					let defaultColor = { bg: [50, 205, 50], text: [0, 0, 0] }; // Lime Green for others
-					let colorConfig = colors[entry.saddlePad] || defaultColor;
+					let rawPad = entry.saddlePad;
+					let padNum = parseInt(rawPad);
+					let colorConfig = colors[rawPad] || colors[padNum] || defaultColor;
 
-					if (entry.saddlePad == 10) {
-						doc.setFillColor(...colorConfig.bg);
-						doc.rect(saddleX, saddleY, squareSize / 2, squareSize, "F");
-						doc.setFillColor(...colorConfig.half);
-						doc.rect(saddleX + squareSize / 2, saddleY, squareSize / 2, squareSize, "F");
-					} else {
-						doc.setFillColor(...colorConfig.bg);
-						doc.rect(saddleX, saddleY, squareSize, squareSize, "F");
-					}
 
-					doc.setTextColor(...colorConfig.text);
-					doc.setFontSize(8);
-					doc.text(`${entry.saddlePad}`, saddleX + 3, saddleY + 4, { align: "center" });
+					if (rawPad === '10') {
+							// Half red/blue logic
+							doc.setFillColor(...colorConfig.bg);
+							doc.rect(saddleX, saddleY, squareSize / 2, squareSize, "F");
+							doc.setFillColor(...colorConfig.half);
+							doc.rect(saddleX + squareSize / 2, saddleY, squareSize / 2, squareSize, "F");
+						} else {
+							doc.setFillColor(...colorConfig.bg);
+							doc.rect(saddleX, saddleY, squareSize, squareSize, "F");
+						}
+						doc.setTextColor(...colorConfig.text);
+						doc.setFontSize(6);
+						doc.text(String(rawPad), saddleX + squareSize / 2, saddleY + squareSize / 2 + 1.5, { align: 'center', baseline: 'middle' });
+
 				}
 
 				doc.setDrawColor(0, 0, 0);
