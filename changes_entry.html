@@ -145,7 +145,7 @@
         <button onclick="showTab('raceChangesTab')">Main</button>
         <button onclick="showTab('loadDataTab')">Load Data</button>
 	<button onclick="fetchWeather()">Get Weather</button>
-	<button onclick="fetchWeather()">Open Display Page</button>
+	<button onclick="openDisplay()">Open Display Page</button>
     </div>
 
     <!-- Race Changes Tab -->
@@ -257,6 +257,21 @@
             document.getElementById("tabs").classList.remove("hidden");
             showTab("raceChangesTab"); // Default to Main tab
         }
+
+	//OPEN DISPLAY
+       function openDisplay() {
+	  const track = encodeURIComponent(document.getElementById("trackName").value);
+	  const date = document.getElementById("raceDate").value;
+	
+	  if (!track || !date) {
+	    alert("Please select both track and date.");
+	    return;
+	  }
+	
+	  const url = `https://changes.judgesreplay.com/get-api/display/${track}/${date}`;
+	  window.open(url, '_blank');
+	}
+
 
 	let availableChanges = {};
 
