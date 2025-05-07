@@ -563,8 +563,8 @@
 		      }
 		
 		      doc.setTextColor(...colorConfig.text);
-		      doc.setFontSize(12);
-		      doc.text(String(rawPad), saddleX + squareSize / 2, saddleY + squareSize / 2 + 1.5, {
+		      doc.setFontSize(10);
+		      doc.text(String(rawPad), saddleX + squareSize / 2, saddleY + squareSize / 2 + 2.5, {
 		        align: 'center',
 		        baseline: 'middle'
 		      });
