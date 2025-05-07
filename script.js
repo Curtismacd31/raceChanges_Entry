@@ -443,7 +443,7 @@
 		  let trackCondition = document.getElementById('trackCondition').value || "N/A";
 		  let weather = document.getElementById('weather').value || "N/A";
 		  let variant = document.getElementById('variant').value || "N/A";
-		  weather = = weather.replace("Current Conditions: ", "");
+		  let weather = = weather.replace("Current Conditions: ", "");
 		
 		  let now = new Date();
 		  let hours = now.getHours();
