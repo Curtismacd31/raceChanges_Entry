@@ -469,10 +469,10 @@
 
   rows.forEach((row) => {
     let raceNumber = row.querySelector(".raceNumber").value || "N/A";
-    let saddlePad = row.querySelector(".saddlePad").value || "N/A";
-    let horseName = row.querySelector(".horseName").value || "N/A";
+    let saddlePad = row.querySelector(".saddlePad").value || "";
+    let horseName = row.querySelector(".horseName").value || "";
     let category = row.querySelector(".changeCategory").value || "N/A";
-    let change = row.querySelector(".changeText").value || "N/A";
+    let change = row.querySelector(".changeText").value || "";
 
     if (change === "N/A" && category === "N/A") return;
 
