@@ -1,0 +1,19 @@
+{
+  "Guelph": "https://weather.gc.ca/rss/city/on-5_e.xml",
+  "Owen Sound": "https://weather.gc.ca/rss/city/on-7_e.xml",
+  "Dresden": "https://weather.gc.ca/rss/city/on-11_e.xml",
+  "Fort Erie": "https://weather.gc.ca/rss/city/on-12_e.xml",
+  "Leamington": "https://weather.gc.ca/rss/city/on-23_e.xml",
+  "Mississauga": "https://weather.gc.ca/rss/city/on-24_e.xml",
+  "Western Fair": "https://weather.gc.ca/rss/weather/42.982_-81.249_e.xml",
+  "Grand River Raceway": "https://weather.gc.ca/rss/weather/43.685_-80.427_e.xml",
+  "Charlottetown - Afternoon": "https://weather.gc.ca/rss/weather/46.243_-63.127_e.xml",
+  "Charlottetown - Evening": "https://weather.gc.ca/rss/weather/46.243_-63.127_e.xml",
+  "Summerside" : "https://weather.gc.ca/rss/weather/46.393_-63.789_e.xml",
+  "Inverness": "https://weather.gc.ca/rss/weather/46.229_-61.304_e.xml",
+  "Northside Downs": "https://weather.gc.ca/rss/weather/46.204_-60.261_e.xml",
+  "Woodstock": "https://weather.gc.ca/rss/weather/46.157_-67.582_e.xml",
+  "The Loop": "https://weather.gc.ca/rss/weather/49.895_-97.135_e.xml",
+  "Truro": "https://weather.gc.ca/rss/weather/45.363_-63.276_e.xml",
+  "Woodbine Mohawk Park": "https://weather.gc.ca/rss/weather/43.522_-79.87_e.xml"
+}
