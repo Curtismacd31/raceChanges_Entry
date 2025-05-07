@@ -429,209 +429,189 @@
 
 
 
-		////////////////////////////////////////////////////////////////////////////////////////////////////////
-		//DOWNLOAD PDF
 		function downloadPDF() {
-			if (!window.jspdf) {
-				alert("Error: jsPDF library is not loaded.");
-				return;
-			}
+  if (!window.jspdf) {
+    alert("Error: jsPDF library is not loaded.");
+    return;
+  }
 
-			const { jsPDF } = window.jspdf;
-			const doc = new jsPDF();
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
 
-			let trackName = document.getElementById('trackName').value || "Unknown Track";
-			let raceDate = document.getElementById('raceDate').value || "No Date";
-			let trackCondition = document.getElementById('trackCondition').value || "N/A";
-			let weather = document.getElementById('weather').value || "N/A";
-			let variant = document.getElementById('variant').value || "N/A";
-			
-			 // ✅ Get Current Time (HH:MM AM/PM format)
-			let now = new Date();
-			let hours = now.getHours();
-			let minutes = now.getMinutes().toString().padStart(2, "0");
-			let ampm = hours >= 12 ? "PM" : "AM";
-			hours = hours % 12 || 12; // Convert to 12-hour format
-			let creationTime = `${hours}:${minutes} ${ampm}`;
+  let trackName = document.getElementById('trackName').value || "Unknown Track";
+  let raceDate = document.getElementById('raceDate').value || "No Date";
+  let trackCondition = document.getElementById('trackCondition').value || "N/A";
+  let weather = document.getElementById('weather').value || "N/A";
+  let variant = document.getElementById('variant').value || "N/A";
 
-			doc.setFont("helvetica", "bold");
-			doc.setFontSize(16);
-			doc.text(`Race Changes - ${trackName}`, 14, 20);
-			doc.setFontSize(12);
-			doc.text(`Date: ${raceDate}`, 14, 30);
-			doc.text(`Creation Time: ${creationTime}`, 14, 36); // ✅ Added Creation Time
-			doc.text(`Track: ${trackCondition}`, 94, 36);
-			doc.text(`Weather: ${weather}`, 94, 30);
-			doc.text(`Variant: ${variant}`, 164, 36);
+  let now = new Date();
+  let hours = now.getHours();
+  let minutes = now.getMinutes().toString().padStart(2, "0");
+  let ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12 || 12;
+  let creationTime = `${hours}:${minutes} ${ampm}`;
 
-			let startY = 40; // Start position for the table
-			let columnWidths = [20, 20, 35, 40, 70]; // [Race #, Saddle Pad, Horse Name, Category, Change]
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text(`Race Changes - ${trackName}`, 14, 20);
+  doc.setFontSize(12);
+  doc.text(`Date: ${raceDate}`, 14, 30);
+  doc.text(`Creation Time: ${creationTime}`, 14, 36);
+  doc.text(`Track: ${trackCondition}`, 94, 36);
+  doc.text(`Weather: ${weather}`, 94, 30);
+  doc.text(`Variant: ${variant}`, 164, 36);
 
-			let rows = document.querySelectorAll("tbody tr");
+  let startY = 40;
+  let columnWidths = [20, 20, 35, 40, 70];
 
-			// Extract and Sort Data
-			let data = [];
+  let rows = document.querySelectorAll("tbody tr");
+  let data = [];
 
-			rows.forEach((row) => {
-				let raceNumber = row.querySelector(".raceNumber").value || "N/A";
-				let saddlePad = row.querySelector(".saddlePad").value || "N/A";
-				let horseName = row.querySelector(".horseName").value || "N/A";
-				let category = row.querySelector(".changeCategory").value || "N/A";
-				let change = row.querySelector(".changeText").value || "N/A";
+  rows.forEach((row) => {
+    let raceNumber = row.querySelector(".raceNumber").value || "N/A";
+    let saddlePad = row.querySelector(".saddlePad").value || "N/A";
+    let horseName = row.querySelector(".horseName").value || "N/A";
+    let category = row.querySelector(".changeCategory").value || "N/A";
+    let change = row.querySelector(".changeText").value || "N/A";
 
-				if (change === "N/A" && category === "N/A") return; // Skip empty changes
+    if (change === "N/A" && category === "N/A") return;
 
-				saddlePad = saddlePad === "N/A" ? "" : saddlePad;
-				horseName = horseName === "N/A" ? "" : horseName;
-				category = category === "N/A" ? "" : category;
-				change = change === "N/A" ? "" : change;
+    data.push({
+      raceNumber,
+      saddlePad,
+      horseName,
+      category,
+      change
+    });
+  });
 
-				data.push({
-					raceNumber: raceNumber, //"RACE " + parseInt(raceNumber),
-					saddlePad: saddlePad === "" ? -1 : parseInt(saddlePad),
-					horseName,
-					category,
-					change
-				});
-			});
+  data.sort((a, b) => {
+    const raceA = parseInt(a.raceNumber.replace(/\D/g, ""), 10);
+    const raceB = parseInt(b.raceNumber.replace(/\D/g, ""), 10);
+    if (raceA !== raceB) return raceA - raceB;
 
-			// ✅ Sorting logic
-			data.sort((a, b) => {
-			  const raceA = parseInt(a.raceNumber.replace(/\D/g, ""), 10);
-			  const raceB = parseInt(b.raceNumber.replace(/\D/g, ""), 10);
-			
-			  if (raceA !== raceB) return raceA - raceB;
-			
-			  const padA = parseInt(a.saddlePad, 10);
-			  const padB = parseInt(b.saddlePad, 10);
-			  return padA - padB;
-			});
+    const padA = isNaN(parseInt(a.saddlePad)) ? 999 : parseInt(a.saddlePad);
+    const padB = isNaN(parseInt(b.saddlePad)) ? 999 : parseInt(b.saddlePad);
+    return padA - padB;
+  });
 
+  doc.setFontSize(10);
+  doc.setTextColor(255, 255, 255);
+  doc.setFillColor(50, 50, 50);
+  doc.rect(14, startY, columnWidths[0], 10, "F");
+  doc.rect(34, startY, columnWidths[1], 10, "F");
+  doc.rect(54, startY, columnWidths[2], 10, "F");
+  doc.rect(89, startY, columnWidths[3], 10, "F");
+  doc.rect(129, startY, columnWidths[4], 10, "F");
 
-			// Table Headers
-			doc.setFontSize(10);
-			doc.setTextColor(255, 255, 255);
-			doc.setFillColor(50, 50, 50);
-			doc.rect(14, startY, columnWidths[0], 10, "F");
-			doc.rect(34, startY, columnWidths[1], 10, "F");
-			doc.rect(54, startY, columnWidths[2], 10, "F");
-			doc.rect(89, startY, columnWidths[3], 10, "F");
-			doc.rect(129, startY, columnWidths[4], 10, "F");
+  doc.text("Race #", 18, startY + 7);
+  doc.text("Saddle", 38, startY + 7);
+  doc.text("Horse Name", 58, startY + 7);
+  doc.text("Category", 94, startY + 7);
+  doc.text("Change", 134, startY + 7);
 
-			doc.text("Race #", 18, startY + 7);
-			doc.text("Saddle", 38, startY + 7);
-			doc.text("Horse Name", 58, startY + 7);
-			doc.text("Category", 94, startY + 7);
-			doc.text("Change", 134, startY + 7);
+  startY += 10;
 
-			startY += 10;
+  data.forEach((entry, index) => {
+    let textWidth = columnWidths[4] - 5;
+    let wrappedText = doc.splitTextToSize(entry.change, textWidth);
+    let rowHeight = Math.max(10, wrappedText.length * 5);
 
-			data.forEach((entry, index) => {
-				let textWidth = columnWidths[4] - 5;
-				let wrappedText = doc.splitTextToSize(entry.change, textWidth);
-				let rowHeight = Math.max(10, wrappedText.length * 5); // Expands row height dynamically
+    doc.setFillColor(index % 2 === 0 ? 240 : 255, 240, 240);
+    doc.rect(14, startY, columnWidths.reduce((a, b) => a + b), rowHeight, "F");
 
-				if (index % 2 === 0) {
-					doc.setFillColor(240, 240, 240);
-				} else {
-					doc.setFillColor(255, 255, 255);
-				}
+    doc.setFontSize(8);
+    doc.setTextColor(0, 0, 0);
 
-				doc.rect(14, startY, columnWidths[0] + columnWidths[1] + columnWidths[2] + columnWidths[3] + columnWidths[4], rowHeight, "F");
+    let centerY = startY + rowHeight / 2 + 2;
+    doc.text(`${entry.raceNumber}`, 18, centerY);
+    doc.text(`${entry.horseName}`, 58, centerY);
+    doc.text(`${entry.category}`, 94, centerY);
+    doc.text(wrappedText, 134, startY + 5);
 
-				doc.setFontSize(8);
-				doc.setTextColor(0, 0, 0);
+    // Saddle pad logic
+    const rawPad = entry.saddlePad?.trim();
+    if (rawPad && rawPad !== "-1") {
+      const saddleX = 37;
+      const saddleY = startY + (rowHeight / 2) - 3;
+      const squareSize = 6;
 
-				let centerY = startY + rowHeight / 2 + 2; // ✅ Center text vertically
+      const colors = {
+        1: { bg: [255, 0, 0], text: [255, 255, 255] },
+        2: { bg: [0, 0, 255], text: [255, 255, 255] },
+        3: { bg: [255, 255, 255], text: [0, 0, 0] },
+        4: { bg: [0, 128, 0], text: [255, 255, 255] },
+        5: { bg: [0, 0, 0], text: [255, 255, 255] },
+        6: { bg: [255, 255, 0], text: [0, 0, 0] },
+        7: { bg: [255, 105, 180], text: [255, 255, 255] },
+        8: { bg: [128, 128, 128], text: [0, 0, 0] },
+        9: { bg: [128, 0, 128], text: [255, 255, 255] },
+        10: { bg: [255, 0, 0], half: [0, 0, 255], text: [255, 255, 255] },
+        AE1: { bg: [255, 255, 255], text: [0, 0, 0] }
+      };
 
-				doc.text(`${entry.raceNumber}`, 18, centerY);
-				doc.text(`${entry.horseName}`, 58, centerY);
-				doc.text(`${entry.category}`, 94, centerY);
-				doc.text(wrappedText, 134, startY + 5); // ✅ Proper alignment for multi-line text
-			}
-				// ✅ **Add Saddle Pad Color Box**
-				if (entry.saddlePad !== -1) {
-					const saddleX = 37;
-					const saddleY = startY + (rowHeight / 2) - 3;
-					const squareSize = 6;
-				
-					const colors = {
-						1: { bg: [255, 0, 0], text: [255, 255, 255] },
-						2: { bg: [0, 0, 255], text: [255, 255, 255] },
-						3: { bg: [255, 255, 255], text: [0, 0, 0] },
-						4: { bg: [0, 128, 0], text: [255, 255, 255] },
-						5: { bg: [0, 0, 0], text: [255, 255, 255] },
-						6: { bg: [255, 255, 0], text: [0, 0, 0] },
-						7: { bg: [255, 105, 180], text: [255, 255, 255] },
-						8: { bg: [128, 128, 128], text: [0, 0, 0] },
-						9: { bg: [128, 0, 128], text: [255, 255, 255] },
-						10: { bg: [255, 0, 0], half: [0, 0, 255], text: [255, 255, 255] },
-						'AE1': { bg: [255, 255, 255], text: [0, 0, 0] }
-					};
-				
-					const rawPad = String(entry.saddlePad).trim();
-					const isSplitPad = rawPad === '10';
-					const colorConfig = colors[rawPad] || colors[parseInt(rawPad)] || { bg: [50, 205, 50], text: [0, 0, 0] };
-				
-					if (isSplitPad) {
-						doc.setFillColor(...colorConfig.bg);
-						doc.rect(saddleX, saddleY, squareSize / 2, squareSize, "F");
-						doc.setFillColor(...colorConfig.half);
-						doc.rect(saddleX + squareSize / 2, saddleY, squareSize / 2, squareSize, "F");
-					} else {
-						doc.setFillColor(...colorConfig.bg);
-						doc.rect(saddleX, saddleY, squareSize, squareSize, "F");
-					}
-				
-					doc.setTextColor(...colorConfig.text);
-					doc.setFontSize(7);
-					doc.text(rawPad, saddleX + squareSize / 2, saddleY + squareSize / 2 + 1.5, {
-						align: 'center',
-						baseline: 'middle'
-					});
-				}
+      const colorConfig = colors[rawPad] || colors[parseInt(rawPad)] || { bg: [50, 205, 50], text: [0, 0, 0] };
 
+      if (rawPad === '10') {
+        doc.setFillColor(...colorConfig.bg);
+        doc.rect(saddleX, saddleY, squareSize / 2, squareSize, "F");
+        doc.setFillColor(...colorConfig.half);
+        doc.rect(saddleX + squareSize / 2, saddleY, squareSize / 2, squareSize, "F");
+      } else {
+        doc.setFillColor(...colorConfig.bg);
+        doc.rect(saddleX, saddleY, squareSize, squareSize, "F");
+      }
 
+      doc.setTextColor(...colorConfig.text);
+      doc.setFontSize(7);
+      doc.text(String(rawPad), saddleX + squareSize / 2, saddleY + squareSize / 2 + 1.5, {
+        align: 'center',
+        baseline: 'middle'
+      });
+    }
 
+    doc.setDrawColor(0, 0, 0);
+    doc.line(14, startY + rowHeight, 184, startY + rowHeight);
 
-			if (data.length === 0) {
-				doc.text("No valid race changes to display.", 14, startY + 10);
-			}
+    startY += rowHeight;
+  });
 
-			//const trackName = document.getElementById('trackName').value;
-			//const raceDate = document.getElementById('raceDate').value;
-			
-			fetch('/json/logos.json')
-			  .then(res => res.json())
-			  .then(logos => {
-			    const logoPath = logos[trackName];
-			    if (!logoPath) return doc.save(`Race_Changes_${trackName}_${raceDate}.pdf`);
-			
-			    fetch(logoPath)
-			      .then(res => res.blob())
-			      .then(blob => {
-			        const reader = new FileReader();
-			        reader.onload = function () {
-			          const base64Image = reader.result;
-			          const imgWidth = 40;
-			          const imgHeight = 20;
-			          doc.addImage(base64Image, 'PNG', 160, 10, imgWidth, imgHeight);
-			          doc.save(`Race_Changes_${trackName}_${raceDate}.pdf`);
-			        };
-			        reader.readAsDataURL(blob);
-			      })
-			      .catch(err => {
-			        console.warn("⚠️ Logo fetch failed:", err);
-			        doc.save(`Race_Changes_${trackName}_${raceDate}.pdf`);
-			      });
-			  })
-			  .catch(() => {
-			    console.warn("⚠️ Failed to load logos.json");
-			    doc.save(`Race_Changes_${trackName}_${raceDate}.pdf`);
-			  });
+  if (data.length === 0) {
+    doc.text("No valid race changes to display.", 14, startY + 10);
+  }
 
-			saveData();
-		}
+  fetch('/json/logos.json')
+    .then(res => res.json())
+    .then(logos => {
+      const logoPath = logos[trackName];
+      if (!logoPath) return doc.save(`Race_Changes_${trackName}_${raceDate}.pdf`);
+
+      fetch(logoPath)
+        .then(res => res.blob())
+        .then(blob => {
+          const reader = new FileReader();
+          reader.onload = function () {
+            const base64Image = reader.result;
+            const imgWidth = 40;
+            const imgHeight = 20;
+            doc.addImage(base64Image, 'PNG', 160, 10, imgWidth, imgHeight);
+            doc.save(`Race_Changes_${trackName}_${raceDate}.pdf`);
+          };
+          reader.readAsDataURL(blob);
+        })
+        .catch(err => {
+          console.warn("⚠️ Logo fetch failed:", err);
+          doc.save(`Race_Changes_${trackName}_${raceDate}.pdf`);
+        });
+    })
+    .catch(() => {
+      console.warn("⚠️ Failed to load logos.json");
+      doc.save(`Race_Changes_${trackName}_${raceDate}.pdf`);
+    });
+
+  saveData();
+}
+
 
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////
