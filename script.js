@@ -566,7 +566,7 @@
 			doc.setFontSize(8);
 			
 			const textX = saddleX + squareSize / 2;
-			const textY = saddleY + squareSize / 2 + 2.5; // ← Adjust this number if still too low/high
+			const textY = saddleY + squareSize / 2 + 4.5; // ← Adjust this number if still too low/high
 			
 			doc.text(String(rawPad), textX, textY, {
 			  align: 'center'
