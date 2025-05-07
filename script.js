@@ -562,12 +562,15 @@
 		        doc.rect(saddleX, saddleY, squareSize, squareSize, "F");
 		      }
 		
-		      doc.setTextColor(...colorConfig.text);
-		      doc.setFontSize(10);
-		      doc.text(String(rawPad), saddleX + squareSize / 2, saddleY + squareSize / 1, {
-		        align: 'center',
-		        baseline: 'middle'
-		      });
+		      	doc.setTextColor(...colorConfig.text);
+			doc.setFontSize(8);
+			
+			const textX = saddleX + squareSize / 2;
+			const textY = saddleY + squareSize / 2 + 2.5; // ← Adjust this number if still too low/high
+			
+			doc.text(String(rawPad), textX, textY, {
+			  align: 'center'
+			});
 		    }
 		
 		    doc.setDrawColor(0, 0, 0);
