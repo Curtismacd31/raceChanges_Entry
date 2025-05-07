@@ -548,48 +548,48 @@
 				doc.text(`${entry.horseName}`, 58, centerY);
 				doc.text(`${entry.category}`, 94, centerY);
 				doc.text(wrappedText, 134, startY + 5); // ✅ Proper alignment for multi-line text
-
+			}
 				// ✅ **Add Saddle Pad Color Box**
-if (entry.saddlePad !== -1) {
-	const saddleX = 37;
-	const saddleY = startY + (rowHeight / 2) - 3;
-	const squareSize = 6;
-
-	const colors = {
-		1: { bg: [255, 0, 0], text: [255, 255, 255] },
-		2: { bg: [0, 0, 255], text: [255, 255, 255] },
-		3: { bg: [255, 255, 255], text: [0, 0, 0] },
-		4: { bg: [0, 128, 0], text: [255, 255, 255] },
-		5: { bg: [0, 0, 0], text: [255, 255, 255] },
-		6: { bg: [255, 255, 0], text: [0, 0, 0] },
-		7: { bg: [255, 105, 180], text: [255, 255, 255] },
-		8: { bg: [128, 128, 128], text: [0, 0, 0] },
-		9: { bg: [128, 0, 128], text: [255, 255, 255] },
-		10: { bg: [255, 0, 0], half: [0, 0, 255], text: [255, 255, 255] },
-		'AE1': { bg: [255, 255, 255], text: [0, 0, 0] }
-	};
-
-	const rawPad = String(entry.saddlePad).trim();
-	const isSplitPad = rawPad === '10';
-	const colorConfig = colors[rawPad] || colors[parseInt(rawPad)] || { bg: [50, 205, 50], text: [0, 0, 0] };
-
-	if (isSplitPad) {
-		doc.setFillColor(...colorConfig.bg);
-		doc.rect(saddleX, saddleY, squareSize / 2, squareSize, "F");
-		doc.setFillColor(...colorConfig.half);
-		doc.rect(saddleX + squareSize / 2, saddleY, squareSize / 2, squareSize, "F");
-	} else {
-		doc.setFillColor(...colorConfig.bg);
-		doc.rect(saddleX, saddleY, squareSize, squareSize, "F");
-	}
-
-	doc.setTextColor(...colorConfig.text);
-	doc.setFontSize(7);
-	doc.text(rawPad, saddleX + squareSize / 2, saddleY + squareSize / 2 + 1.5, {
-		align: 'center',
-		baseline: 'middle'
-	});
-}
+				if (entry.saddlePad !== -1) {
+					const saddleX = 37;
+					const saddleY = startY + (rowHeight / 2) - 3;
+					const squareSize = 6;
+				
+					const colors = {
+						1: { bg: [255, 0, 0], text: [255, 255, 255] },
+						2: { bg: [0, 0, 255], text: [255, 255, 255] },
+						3: { bg: [255, 255, 255], text: [0, 0, 0] },
+						4: { bg: [0, 128, 0], text: [255, 255, 255] },
+						5: { bg: [0, 0, 0], text: [255, 255, 255] },
+						6: { bg: [255, 255, 0], text: [0, 0, 0] },
+						7: { bg: [255, 105, 180], text: [255, 255, 255] },
+						8: { bg: [128, 128, 128], text: [0, 0, 0] },
+						9: { bg: [128, 0, 128], text: [255, 255, 255] },
+						10: { bg: [255, 0, 0], half: [0, 0, 255], text: [255, 255, 255] },
+						'AE1': { bg: [255, 255, 255], text: [0, 0, 0] }
+					};
+				
+					const rawPad = String(entry.saddlePad).trim();
+					const isSplitPad = rawPad === '10';
+					const colorConfig = colors[rawPad] || colors[parseInt(rawPad)] || { bg: [50, 205, 50], text: [0, 0, 0] };
+				
+					if (isSplitPad) {
+						doc.setFillColor(...colorConfig.bg);
+						doc.rect(saddleX, saddleY, squareSize / 2, squareSize, "F");
+						doc.setFillColor(...colorConfig.half);
+						doc.rect(saddleX + squareSize / 2, saddleY, squareSize / 2, squareSize, "F");
+					} else {
+						doc.setFillColor(...colorConfig.bg);
+						doc.rect(saddleX, saddleY, squareSize, squareSize, "F");
+					}
+				
+					doc.setTextColor(...colorConfig.text);
+					doc.setFontSize(7);
+					doc.text(rawPad, saddleX + squareSize / 2, saddleY + squareSize / 2 + 1.5, {
+						align: 'center',
+						baseline: 'middle'
+					});
+				}
 
 
 
