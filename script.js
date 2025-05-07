@@ -428,7 +428,7 @@
 		}
 
 
-
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		function downloadPDF() {
   if (!window.jspdf) {
     alert("Error: jsPDF library is not loaded.");
@@ -477,11 +477,11 @@
     if (change === "N/A" && category === "N/A") return;
 
     data.push({
-      raceNumber,
-      saddlePad,
-      horseName,
-      category,
-      change
+	raceNumber: raceNumber, //"RACE " + parseInt(raceNumber),
+	saddlePad: saddlePad === "" ? -1 : parseInt(saddlePad),
+	horseName,
+	category,
+	change
     });
   });
 
