@@ -517,7 +517,7 @@
     let wrappedText = doc.splitTextToSize(entry.change, textWidth);
     let rowHeight = Math.max(10, wrappedText.length * 5);
 
-    doc.setFillColor(index % 2 === 0 ? 240 : 255, 240, 240);
+    doc.setFillColor(i % 2 === 0 ? 255 : 240, 255, 255); // Alternating white & light grey
     doc.rect(14, startY, columnWidths.reduce((a, b) => a + b), rowHeight, "F");
 
     doc.setFontSize(8);
