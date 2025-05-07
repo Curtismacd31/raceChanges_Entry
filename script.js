@@ -551,11 +551,11 @@
 
 				// ✅ **Add Saddle Pad Color Box**
 if (entry.saddlePad !== -1) {
-	let saddleX = 37;
-	let saddleY = startY + (rowHeight / 2) - 3;
-	let squareSize = 6;
+	const saddleX = 37;
+	const saddleY = startY + (rowHeight / 2) - 3;
+	const squareSize = 6;
 
-	let colors = {
+	const colors = {
 		1: { bg: [255, 0, 0], text: [255, 255, 255] },
 		2: { bg: [0, 0, 255], text: [255, 255, 255] },
 		3: { bg: [255, 255, 255], text: [0, 0, 0] },
@@ -585,11 +585,12 @@ if (entry.saddlePad !== -1) {
 
 	doc.setTextColor(...colorConfig.text);
 	doc.setFontSize(7);
-	doc.text(rawPad, saddleX + squareSize / 2, saddleY + squareSize / 2 + 2, {
+	doc.text(rawPad, saddleX + squareSize / 2, saddleY + squareSize / 2 + 1.5, {
 		align: 'center',
 		baseline: 'middle'
 	});
-})
+}
+
 
 
 
