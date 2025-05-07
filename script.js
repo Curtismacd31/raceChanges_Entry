@@ -589,7 +589,7 @@ if (entry.saddlePad !== -1) {
 		align: 'center',
 		baseline: 'middle'
 	});
-}
+})
 
 
 
