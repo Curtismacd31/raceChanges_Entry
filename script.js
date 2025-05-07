@@ -477,11 +477,11 @@
     if (change === "N/A" && category === "N/A") return;
 
     data.push({
-	raceNumber: raceNumber, //"RACE " + parseInt(raceNumber),
-	saddlePad: saddlePad === "" ? -1 : parseInt(saddlePad),
-	horseName,
-	category,
-	change
+      raceNumber,
+      saddlePad,
+      horseName,
+      category,
+      change
     });
   });
 
