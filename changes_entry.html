@@ -111,11 +111,16 @@
 	td:nth-child(5) { width: 10%; }  /* Category */
 	td:nth-child(6) { width: 5%; }   /* Action button */
 	    
-	th:nth-child(6),
-	td:nth-child(6) {
-	  text-align: center;
-	  white-space: nowrap;
+	td:nth-child(6),
+	th:nth-child(6) {
+	    width: 1%;
+	    min-width: 80px; /* just enough for the button */
+	    max-width: 100px;
+	    text-align: center;
+	    white-space: nowrap;
+	    padding: 0 5px;
 	}
+
 
         .hidden {
             display: none;
