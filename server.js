@@ -132,11 +132,32 @@ app.post('/api/:filename', (req, res) => {
 
 
     try {
-        insertMany(changes);
-        res.json({ success: true, message: "Saved to database." });
-
+      // Fetch existing changes from DB for this track/date
+      const existing = db.prepare(`
+        SELECT raceNumber, saddlePad, horseName, category, change
+        FROM changes
+        WHERE track = ? AND date = ?
+      `).all(track, date);
+    
+      const existingMap = new Map();
+      for (const row of existing) {
+        const key = `${row.raceNumber}|${row.saddlePad}|${row.category}`;
+        existingMap.set(key, row.change);
+      }
+    
+      // Find only NEW or UPDATED changes
+      const newChanges = changes.filter(c => {
+        const key = `${c.raceNumber}|${c.saddlePad}|${c.category}`;
+        return existingMap.get(key) !== c.change;
+      });
+    
+      // Save all changes (overwrite strategy)
+      insertMany(changes);
+    
+      // Log only what was new/updated
+      if (newChanges.length > 0) {
         const username = req.body.username || 'Unknown User';
-        const changeDetails = changes.map(c => {
+        const changeDetails = newChanges.map(c => {
           const race = c.raceNumber || '?';
           const pad = c.saddlePad || '?';
           const horse = c.horseName || '?';
@@ -144,12 +165,16 @@ app.post('/api/:filename', (req, res) => {
           const change = c.change || '?';
           return `Race ${race}, #${pad} (${horse}) - ${category.toUpperCase()}: ${change}`;
         }).join('\n    ');
-        
-        logChange(username, `Updated changes for ${track} on ${date}:\n    ${changeDetails}`);
+        logChange(username, `NEW changes for ${track} on ${date}:\n    ${changeDetails}`);
+      }
+    
+      res.json({ success: true, message: "Saved to database." });
+    
     } catch (e) {
-        console.error("❌ DB Error:", e);
-        res.status(500).json({ error: "Failed to save to DB" });
+      console.error("❌ DB Error:", e);
+      res.status(500).json({ error: "Failed to save to DB" });
     }
+
 });
 
 
