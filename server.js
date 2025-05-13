@@ -68,7 +68,16 @@ db.prepare(`
   )
 `).run();
 
+// ✅ Setup simple text-based logging
+const LOG_FILE = path.join(__dirname, 'logs.txt');
 
+function logChange(username, action) {
+    const timestamp = new Date().toISOString();
+    const entry = `[${timestamp}] ${username} - ${action}\n`;
+    fs.appendFile(LOG_FILE, entry, (err) => {
+        if (err) console.error("❌ Failed to write log:", err);
+    });
+}
 
 
 // ✅ Serve homepage
@@ -125,6 +134,18 @@ app.post('/api/:filename', (req, res) => {
     try {
         insertMany(changes);
         res.json({ success: true, message: "Saved to database." });
+
+        const username = req.body.username || 'Unknown User';
+        const changeDetails = changes.map(c => {
+          const race = c.raceNumber || '?';
+          const pad = c.saddlePad || '?';
+          const horse = c.horseName || '?';
+          const category = c.category || '?';
+          const change = c.change || '?';
+          return `Race ${race}, #${pad} (${horse}) - ${category.toUpperCase()}: ${change}`;
+        }).join('\n    ');
+        
+        logChange(username, `Updated changes for ${track} on ${date}:\n    ${changeDetails}`);
     } catch (e) {
         console.error("❌ DB Error:", e);
         res.status(500).json({ error: "Failed to save to DB" });
@@ -690,6 +711,19 @@ app.get('/get-api/display/:track/:date', async (req, res) => {
 });
 
 
+// ✅ Logs viewer
+app.get('/logs', (req, res) => {
+    if (!fs.existsSync(LOG_FILE)) {
+        return res.send("No logs found.");
+    }
+    fs.readFile(LOG_FILE, 'utf-8', (err, data) => {
+        if (err) {
+            res.status(500).send("Unable to read logs.");
+        } else {
+            res.type('text/plain').send(data);
+        }
+    });
+});
 
 
 
