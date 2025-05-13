@@ -132,32 +132,33 @@ app.post('/api/:filename', (req, res) => {
 
 
     try {
-    // 1. Get existing changes from DB for this track and date
-    const existing = db.prepare(`
+    // Step 1: Get existing changes BEFORE clearing them
+    const previous = db.prepare(`
         SELECT raceNumber, saddlePad, category, change
         FROM changes
         WHERE track = ? AND date = ?
     `).all(track, date);
 
-    // 2. Build a quick lookup map for comparison
-    const existingMap = new Map();
-    for (const row of existing) {
+    const previousMap = new Map();
+    for (const row of previous) {
         const key = `${row.raceNumber}|${row.saddlePad}|${row.category}`;
-        existingMap.set(key, row.change);
+        previousMap.set(key, row.change);
     }
 
-    // 3. Identify which changes are new or modified
-    const newChanges = changes.filter(c => {
-        const key = `${c.raceNumber}|${c.saddlePad}|${c.category}`;
-        return existingMap.get(key) !== c.change;
-    });
-
-    // 4. Overwrite DB with all changes
+    // Step 2: Delete and insert fresh (overwrite)
+    db.prepare("DELETE FROM changes WHERE track = ? AND date = ?").run(track, date);
     insertMany(changes);
 
-    // 5. Log only the new or changed entries
+    // Step 3: Compare with what was there before
+    const newChanges = changes.filter(c => {
+        const key = `${c.raceNumber}|${c.saddlePad}|${c.category}`;
+        return previousMap.get(key) !== c.change;
+    });
+
+    // Step 4: Log only real new/changed ones
+    const username = req.body.username || 'Unknown User';
+
     if (newChanges.length > 0) {
-        const username = req.body.username || 'Unknown User';
         const changeDetails = newChanges.map(c => {
             const race = c.raceNumber || '?';
             const pad = c.saddlePad || '?';
@@ -175,6 +176,7 @@ app.post('/api/:filename', (req, res) => {
     console.error("❌ DB Error:", e);
     res.status(500).json({ error: "Failed to save to DB" });
 }
+
 
 });
 
