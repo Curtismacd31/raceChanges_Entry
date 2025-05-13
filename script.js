@@ -8,6 +8,8 @@
 			function validateLogin() {
 				const username = document.getElementById("usernameInput").value;
 				const password = document.getElementById("passwordInput").value;
+
+				localStorage.setItem("username", username); // save it in browser storage
 				
 				fetch("/validate-login", {
 				    method: "POST",
@@ -408,12 +410,14 @@
 			const variant = document.getElementById("variant").value;
 		
 			const apiFilename = `${trackName}_${raceDate}_changes`;
-		
+
+			const username = localStorage.getItem("username") || "Unknown User";
+	
 			fetch(`/api/${encodeURIComponent(apiFilename)}`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					username: username, // make sure this is set
+					username, 
 					trackCondition,
 					weather,
 					variant,
