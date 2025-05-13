@@ -104,22 +104,19 @@
             background-color: #333;
             color: white;
         }
-	td:nth-child(1) { width: 10%; }  /* Race Number */
-	td:nth-child(2) { width: 5%; }  /* Saddle Pad */
-	td:nth-child(3) { width: 20%; }  /* Horse Name */
-	td:nth-child(4) { width: 45%; }  /* Change - wider */
-	td:nth-child(5) { width: 10%; }  /* Category */
-	td:nth-child(6) { width: 5%; }   /* Action button */
-	    
-	td:nth-child(6),
-	th:nth-child(6) {
-	    width: 1%;
-	    min-width: 150px; /* just enough for the button */
-	    max-width: 200px;
+	/* New column widths */
+	td:nth-child(1), th:nth-child(1) { width: 6%; }   /* Race Number */
+	td:nth-child(2), th:nth-child(2) { width: 6%; }   /* Saddle Pad */
+	td:nth-child(3), th:nth-child(3) { width: 20%; }  /* Horse Name */
+	td:nth-child(4), th:nth-child(4) { width: 20%; }  /* Category */
+	td:nth-child(5), th:nth-child(5) { width: 42%; }  /* Change - wider */
+	td:nth-child(6), th:nth-child(6) {
+	    width: 6%;
 	    text-align: center;
 	    white-space: nowrap;
-	    padding: 0 5px;
+	    padding: 0 4px;
 	}
+
 
 
         .hidden {
