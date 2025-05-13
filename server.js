@@ -151,16 +151,19 @@ app.post('/api/:filename', (req, res) => {
 
     // Step 3: Compare with what was there before
     const newChanges = changes.filter(c => {
-        const key = `${c.raceNumber}|${c.saddlePad}|${c.category}`;
-        return previousMap.get(key) !== c.change;
+      const key = `${c.raceNumber}|${c.saddlePad}|${c.category}`;
+      const isUpdated = previousMap.get(key) !== c.change;
+      const isNoChanges = (c.change || "").trim().toUpperCase() === "NO CHANGES";
+      return isUpdated && !isNoChanges;
     });
+
 
     // Step 4: Log only real new/changed ones
     const username = req.body.username || 'Unknown User';
 
     if (newChanges.length > 0) {
         const changeDetails = newChanges.map(c => {
-            const race = c.raceNumber || '?';
+            const race = (c.raceNumber || '?').replace(/^Race\s*/i, '');
             const pad = c.saddlePad || '?';
             const horse = c.horseName || '?';
             const category = c.category || '?';
