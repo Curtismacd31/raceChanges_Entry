@@ -413,7 +413,7 @@
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					username: currentUser, // make sure this is set
+					username: username, // make sure this is set
 					trackCondition,
 					weather,
 					variant,
