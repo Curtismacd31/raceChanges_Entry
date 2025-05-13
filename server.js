@@ -132,48 +132,49 @@ app.post('/api/:filename', (req, res) => {
 
 
     try {
-      // Fetch existing changes from DB for this track/date
-      const existing = db.prepare(`
-        SELECT raceNumber, saddlePad, horseName, category, change
+    // 1. Get existing changes from DB for this track and date
+    const existing = db.prepare(`
+        SELECT raceNumber, saddlePad, category, change
         FROM changes
         WHERE track = ? AND date = ?
-      `).all(track, date);
-    
-      const existingMap = new Map();
-      for (const row of existing) {
+    `).all(track, date);
+
+    // 2. Build a quick lookup map for comparison
+    const existingMap = new Map();
+    for (const row of existing) {
         const key = `${row.raceNumber}|${row.saddlePad}|${row.category}`;
         existingMap.set(key, row.change);
-      }
-    
-      // Find only NEW or UPDATED changes
-      const newChanges = changes.filter(c => {
+    }
+
+    // 3. Identify which changes are new or modified
+    const newChanges = changes.filter(c => {
         const key = `${c.raceNumber}|${c.saddlePad}|${c.category}`;
         return existingMap.get(key) !== c.change;
-      });
-    
-      // Save all changes (overwrite strategy)
-      insertMany(changes);
-    
-      // Log only what was new/updated
-      if (newChanges.length > 0) {
+    });
+
+    // 4. Overwrite DB with all changes
+    insertMany(changes);
+
+    // 5. Log only the new or changed entries
+    if (newChanges.length > 0) {
         const username = req.body.username || 'Unknown User';
         const changeDetails = newChanges.map(c => {
-          const race = c.raceNumber || '?';
-          const pad = c.saddlePad || '?';
-          const horse = c.horseName || '?';
-          const category = c.category || '?';
-          const change = c.change || '?';
-          return `Race ${race}, #${pad} (${horse}) - ${category.toUpperCase()}: ${change}`;
+            const race = c.raceNumber || '?';
+            const pad = c.saddlePad || '?';
+            const horse = c.horseName || '?';
+            const category = c.category || '?';
+            const change = c.change || '?';
+            return `Race ${race}, #${pad} (${horse}) - ${category.toUpperCase()}: ${change}`;
         }).join('\n    ');
         logChange(username, `NEW changes for ${track} on ${date}:\n    ${changeDetails}`);
-      }
-    
-      res.json({ success: true, message: "Saved to database." });
-    
-    } catch (e) {
-      console.error("❌ DB Error:", e);
-      res.status(500).json({ error: "Failed to save to DB" });
     }
+
+    res.json({ success: true, message: "Saved to database." });
+
+} catch (e) {
+    console.error("❌ DB Error:", e);
+    res.status(500).json({ error: "Failed to save to DB" });
+}
 
 });
 
