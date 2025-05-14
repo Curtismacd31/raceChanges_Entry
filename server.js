@@ -481,7 +481,7 @@ const ftp = require("basic-ftp");
 
 app.get("/ftp-list", async (req, res) => {
   const client = new ftp.Client(10000);
-  client.ftp.verbose = true;
+  client.ftp.verbose = false;
 
   try {
     await client.access({
@@ -491,14 +491,13 @@ app.get("/ftp-list", async (req, res) => {
       secure: false
     });
 
-    // 🔥 ADD THIS LINE: switch to correct VMS directory
-    await client.cd("CTA2$DISK:[PRIPRD.LGI.PBA470FT]");
+    await client.cd("CTA2$DISK:[PRIPRD.LGI.PBA470FT]"); // Add this explicitly
 
     const list = await client.list();
 
     const zipFiles = list
       .filter(file => file.name.toUpperCase().endsWith(".ZIP;1"))
-      .map(file => file.name.replace(/;1$/, "")); // Strip VMS version
+      .map(file => file.name);
 
     res.json(zipFiles);
   } catch (err) {
@@ -508,10 +507,6 @@ app.get("/ftp-list", async (req, res) => {
     client.close();
   }
 });
-
-
-
-
 
 /////SETUP ROUTES
 const unzipper = require("unzipper"); // npm install unzipper
