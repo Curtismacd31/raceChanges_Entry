@@ -127,29 +127,19 @@
 		    .then(res => res.json())
 		    .then(files => {
 		      dropdown.innerHTML = "";
-		
-		      // ✅ Check if files is an array before using forEach
-		      if (Array.isArray(files)) {
-		        files.forEach(f => {
-		          const opt = document.createElement("option");
-		          opt.value = f;
-		          opt.textContent = f;
-		          dropdown.appendChild(opt);
-		        });
-		      } else {
-		        console.warn("Unexpected response from /ftp-list:", files);
-
-			      
-
-		        dropdown.innerHTML = "<option>No files found</option>";
-		      }
+		      files.forEach(f => {
+		        const opt = document.createElement("option");
+		        opt.value = f;
+		        opt.textContent = f;
+		        dropdown.appendChild(opt);
+		      });
 		    })
 		    .catch(err => {
 		      console.error("❌ FTP fetch failed:", err);
-		      console.error("Connecting to FTP:", process.env.FTP_HOST, process.env.FTP_USER);
 		      dropdown.innerHTML = "<option>Error loading files</option>";
 		    });
 		}
+
 
 		
 		function loadSelectedFtpFile() {
