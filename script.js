@@ -119,30 +119,39 @@
 
 		/////////////////////////////////////////////////////////////////////////////////////////////////////
 		//FTP
-		function listFtpFiles() {
-		  const dropdown = document.getElementById("ftpFileList");
-		  dropdown.innerHTML = "<option>Loading...</option>";
+		const ftp = require("basic-ftp");
+
+		async function listFtpFiles() {
+		    const client = new ftp.Client();
+		    client.ftp.verbose = true; // Enable detailed logging for debugging
 		
-		  fetch("/ftp-list")
-		    .then(res => {
-		      if (!res.ok) throw new Error("Server returned error");
-		      return res.json();
-		    })
-		    .then(files => {
-		      if (!Array.isArray(files)) throw new Error("Invalid file list");
-		      dropdown.innerHTML = "";
-		      files.forEach(f => {
-		        const opt = document.createElement("option");
-		        opt.value = f;
-		        opt.textContent = f;
-		        dropdown.appendChild(opt);
-		      });
-		    })
-		    .catch(err => {
-		      console.error("❌ FTP fetch failed:", err);
-		      dropdown.innerHTML = "<option>Error loading files</option>";
-		    });
+		    try {
+		        await client.access({
+		            host: "p1.standardbredcanada.com",
+		            user: "pba470ft",
+		            password: "p72vr9xz3",
+		            secure: false, // Set to true if your server supports FTPS
+		        });
+		
+		        // Navigate to the target directory
+		        await client.cd("CTA2$DISK:[PRIPRD.LGI.PBA470FT]");
+		
+		        // List files in the current directory
+		        const fileList = await client.list();
+		        console.log("Files in directory:");
+		        fileList.forEach(file => {
+		            console.log(file.name);
+		        });
+		
+		        return fileList.map(file => file.name);
+		    } catch (err) {
+		        console.error("❌ FTP error:", err);
+		        throw err;
+		    } finally {
+		        client.close();
+		    }
 		}
+
 
 
 
