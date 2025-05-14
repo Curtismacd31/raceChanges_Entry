@@ -480,7 +480,9 @@ app.delete('/admin/users/:username', (req, res) => {
 const ftp = require("basic-ftp");
 
 app.get("/ftp-list", async (req, res) => {
-  const client = new ftp.Client();
+const client = new ftp.Client(10000); // 10 second timeout
+client.ftp.socketTimeout = 10000;
+
   client.ftp.verbose = false;
 
   try {
