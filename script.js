@@ -124,8 +124,12 @@
 		  dropdown.innerHTML = "<option>Loading...</option>";
 		
 		  fetch("/ftp-list")
-		    .then(res => res.json())
+		    .then(res => {
+		      if (!res.ok) throw new Error("Server returned error");
+		      return res.json();
+		    })
 		    .then(files => {
+		      if (!Array.isArray(files)) throw new Error("Invalid file list");
 		      dropdown.innerHTML = "";
 		      files.forEach(f => {
 		        const opt = document.createElement("option");
@@ -139,6 +143,7 @@
 		      dropdown.innerHTML = "<option>Error loading files</option>";
 		    });
 		}
+
 
 
 		
