@@ -120,10 +120,12 @@
 		/////////////////////////////////////////////////////////////////////////////////////////////////////
 		//FTP
 		function listFtpFiles() {
+		  const dropdown = document.getElementById("ftpFileList");
+		  dropdown.innerHTML = "<option>Loading...</option>";
+		
 		  fetch("/ftp-list")
 		    .then(res => res.json())
 		    .then(files => {
-		     const dropdown = document.getElementById("ftpFileList");
 		      dropdown.innerHTML = "";
 		      files.forEach(f => {
 		        const opt = document.createElement("option");
@@ -131,8 +133,13 @@
 		        opt.textContent = f;
 		        dropdown.appendChild(opt);
 		      });
+		    })
+		    .catch(err => {
+		      console.error("❌ FTP fetch failed:", err);
+		      dropdown.innerHTML = "<option>Error loading files</option>";
 		    });
 		}
+
 		
 		function loadSelectedFtpFile() {
 		  const selected = document.getElementById("ftpFileDropdown").value;
