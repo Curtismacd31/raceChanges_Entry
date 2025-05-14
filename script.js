@@ -139,13 +139,14 @@
 		      } else {
 		        console.warn("Unexpected response from /ftp-list:", files);
 
-			      console.log("Connecting to FTP:", process.env.FTP_HOST, process.env.FTP_USER);
+			      
 
 		        dropdown.innerHTML = "<option>No files found</option>";
 		      }
 		    })
 		    .catch(err => {
 		      console.error("❌ FTP fetch failed:", err);
+		      console.error("Connecting to FTP:", process.env.FTP_HOST, process.env.FTP_USER);
 		      dropdown.innerHTML = "<option>Error loading files</option>";
 		    });
 		}
