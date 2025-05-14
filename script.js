@@ -123,7 +123,7 @@
 		  fetch("/ftp-list")
 		    .then(res => res.json())
 		    .then(files => {
-		      const dropdown = document.getElementById("ftpFileDropdown");
+		     const dropdown = document.getElementById("ftpFileList");
 		      dropdown.innerHTML = "";
 		      files.forEach(f => {
 		        const opt = document.createElement("option");
