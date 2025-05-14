@@ -478,29 +478,29 @@ app.delete('/admin/users/:username', (req, res) => {
 
 //SETUP FTP USE
 const { exec } = require("child_process");
-const path = require("path");
 
 app.get("/ftp-list", (req, res) => {
-  const scriptPath = path.join(__dirname, "ftp_list.py");
-  exec(`python3 "${scriptPath}"`, (err, stdout, stderr) => {
-    if (err) {
-      console.error("❌ Python FTP list error:", err);
-      return res.status(500).json({ error: "Failed to list FTP files" });
+  exec("python3 ftp_list.py", (error, stdout, stderr) => {
+    if (error) {
+      console.error("❌ Python script error:", error);
+      return res.status(500).json({ error: "Failed to run FTP script." });
     }
 
     try {
-      const result = JSON.parse(stdout);
-      if (Array.isArray(result)) {
-        res.json(result); // ✅ Send clean ZIP file list
+      const parsed = JSON.parse(stdout);
+      if (Array.isArray(parsed)) {
+        res.json(parsed);
       } else {
-        res.status(500).json({ error: result.error || "Unknown error" });
+        console.error("❌ Unexpected FTP list response:", parsed);
+        res.status(500).json({ error: parsed.error || "Invalid FTP response" });
       }
     } catch (parseErr) {
-      console.error("❌ Failed to parse Python output:", parseErr);
-      res.status(500).json({ error: "Invalid response from Python" });
+      console.error("❌ Failed to parse FTP output:", stdout);
+      res.status(500).json({ error: "Invalid response from FTP script" });
     }
   });
 });
+
 
 
 /////SETUP ROUTES
