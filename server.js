@@ -500,7 +500,7 @@ app.get("/ftp-list", async (req, res) => {
     console.log("📄 Directory listing:", list);
 
     const zipFiles = list
-      .filter(file => file.name && file.name.toLowerCase().endsWith(".zip"))
+      .filter(file => file.name && file.name.toLowerCase().endsWith(".zip;1"))
       .map(file => file.name);
 
     res.json(zipFiles);
