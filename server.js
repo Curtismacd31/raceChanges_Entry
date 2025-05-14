@@ -480,25 +480,27 @@ app.delete('/admin/users/:username', (req, res) => {
 const ftp = require("basic-ftp");
 
 app.get("/ftp-list", async (req, res) => {
-const client = new ftp.Client(10000); // 10 second timeout
-client.ftp.socketTimeout = 10000;
-
-  client.ftp.verbose = false;
+  const client = new ftp.Client(10000); // 10 sec timeout
+  client.ftp.verbose = true;
 
   try {
     await client.access({
-          host: process.env.FTP_HOST,
-          user: process.env.FTP_USER,
-          password: process.env.FTP_PASS,
-          secure: false,
-          passive: true
-        });
+      host: process.env.FTP_HOST,
+      user: process.env.FTP_USER,
+      password: process.env.FTP_PASS,
+      secure: false
+    });
 
+    console.log("✅ Connected to FTP");
 
+    // 👇 Try changing to the correct directory explicitly
+    await client.cd("CTA2$DISK:[PRIPRD.LGI.PBA470FT]");
 
     const list = await client.list();
+    console.log("📄 Directory listing:", list);
+
     const zipFiles = list
-      .filter(file => file.name.endsWith(".zip"))
+      .filter(file => file.name && file.name.toLowerCase().endsWith(".zip"))
       .map(file => file.name);
 
     res.json(zipFiles);
@@ -509,6 +511,7 @@ client.ftp.socketTimeout = 10000;
     client.close();
   }
 });
+
 
 
 /////SETUP ROUTES
