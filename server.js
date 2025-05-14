@@ -477,27 +477,46 @@ app.delete('/admin/users/:username', (req, res) => {
 });
 
 //SETUP FTP USE
-const { exec } = require("child_process");
+const FTPClient = require("ftp");
 
 app.get("/ftp-list", (req, res) => {
-  exec("python3 ftp_list.py", (error, stdout, stderr) => {
-    if (error) {
-      console.error("❌ Python script error:", error);
-      return res.status(500).json({ error: "Failed to run FTP script." });
-    }
+  const client = new FTPClient();
 
-    try {
-      const parsed = JSON.parse(stdout);
-      if (Array.isArray(parsed)) {
-        res.json(parsed);
-      } else {
-        console.error("❌ Unexpected FTP list response:", parsed);
-        res.status(500).json({ error: parsed.error || "Invalid FTP response" });
+  client.on("ready", () => {
+    // ✅ OpenVMS format
+    client.cwd("CTA2$DISK:[PRIPRD.LGI.PBA470FT]", (err) => {
+      if (err) {
+        console.error("❌ Directory change error:", err.message);
+        client.end();
+        return res.status(500).json({ error: "Failed to change directory" });
       }
-    } catch (parseErr) {
-      console.error("❌ Failed to parse FTP output:", stdout);
-      res.status(500).json({ error: "Invalid response from FTP script" });
-    }
+
+      client.list((err, list) => {
+        if (err) {
+          console.error("❌ Listing error:", err.message);
+          client.end();
+          return res.status(500).json({ error: "Failed to list files" });
+        }
+
+        const files = list
+          .filter(item => item.name.toUpperCase().endsWith(".ZIP;1"))
+          .map(item => item.name.split(";")[0]); // remove ;1
+
+        client.end();
+        return res.json(files);
+      });
+    });
+  });
+
+  client.on("error", (err) => {
+    console.error("❌ FTP connection error:", err.message);
+    res.status(500).json({ error: "FTP connection failed" });
+  });
+
+  client.connect({
+    host: "p1.standardbredcanada.com",
+    user: "pba470ft",
+    password: "p72vr9xz3"
   });
 });
 
