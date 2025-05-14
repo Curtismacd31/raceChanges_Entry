@@ -127,12 +127,19 @@
 		    .then(res => res.json())
 		    .then(files => {
 		      dropdown.innerHTML = "";
-		      files.forEach(f => {
-		        const opt = document.createElement("option");
-		        opt.value = f;
-		        opt.textContent = f;
-		        dropdown.appendChild(opt);
-		      });
+		
+		      // ✅ Check if files is an array before using forEach
+		      if (Array.isArray(files)) {
+		        files.forEach(f => {
+		          const opt = document.createElement("option");
+		          opt.value = f;
+		          opt.textContent = f;
+		          dropdown.appendChild(opt);
+		        });
+		      } else {
+		        console.warn("Unexpected response from /ftp-list:", files);
+		        dropdown.innerHTML = "<option>No files found</option>";
+		      }
 		    })
 		    .catch(err => {
 		      console.error("❌ FTP fetch failed:", err);
