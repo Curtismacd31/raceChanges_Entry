@@ -491,15 +491,14 @@ app.get("/ftp-list", async (req, res) => {
       secure: false
     });
 
-    // Optionally change directory if needed:
-    // await client.cd("CTA2$DISK:[PRIPRD.LGI.PBA470FT]");
+    // 🔥 ADD THIS LINE: switch to correct VMS directory
+    await client.cd("CTA2$DISK:[PRIPRD.LGI.PBA470FT]");
 
     const list = await client.list();
-    console.log("📄 Raw directory list:", list.map(f => f.name));
 
     const zipFiles = list
-      .filter(file => file.name && file.name.toLowerCase().endsWith(".zip;1"))
-      .map(file => file.name.replace(/;1$/, "")); // Strip ;1
+      .filter(file => file.name.toUpperCase().endsWith(".ZIP;1"))
+      .map(file => file.name.replace(/;1$/, "")); // Strip VMS version
 
     res.json(zipFiles);
   } catch (err) {
@@ -509,6 +508,7 @@ app.get("/ftp-list", async (req, res) => {
     client.close();
   }
 });
+
 
 
 
@@ -532,7 +532,9 @@ app.post("/ftp-download", async (req, res) => {
       secure: false
     });
 
+    await client.cd("CTA2$DISK:[PRIPRD.LGI.PBA470FT]");
     await client.downloadTo(tempPath, filename + ";1");
+
     client.close();
 
     // ✅ Wrap unzip logic in try-catch to prevent crash
