@@ -477,36 +477,31 @@ app.delete('/admin/users/:username', (req, res) => {
 });
 
 //SETUP FTP USE
-const ftp = require("basic-ftp");
+const { exec } = require("child_process");
+const path = require("path");
 
-app.get("/ftp-list", async (req, res) => {
-  const client = new ftp.Client(10000);
-  client.ftp.verbose = false;
+app.get("/ftp-list", (req, res) => {
+  const scriptPath = path.join(__dirname, "ftp_list.py");
+  exec(`python3 "${scriptPath}"`, (err, stdout, stderr) => {
+    if (err) {
+      console.error("❌ Python FTP list error:", err);
+      return res.status(500).json({ error: "Failed to list FTP files" });
+    }
 
-  try {
-    await client.access({
-      host: process.env.FTP_HOST,
-      user: process.env.FTP_USER,
-      password: process.env.FTP_PASS,
-      secure: false
-    });
-
-    await client.cd("CTA2$DISK:[PRIPRD.LGI.PBA470FT]"); // Add this explicitly
-
-    const list = await client.list();
-
-    const zipFiles = list
-      .filter(file => file.name.toUpperCase().endsWith(".ZIP;1"))
-      .map(file => file.name);
-
-    res.json(zipFiles);
-  } catch (err) {
-    console.error("❌ FTP error:", err);
-    res.status(500).json({ error: "Failed to connect to FTP" });
-  } finally {
-    client.close();
-  }
+    try {
+      const result = JSON.parse(stdout);
+      if (Array.isArray(result)) {
+        res.json(result); // ✅ Send clean ZIP file list
+      } else {
+        res.status(500).json({ error: result.error || "Unknown error" });
+      }
+    } catch (parseErr) {
+      console.error("❌ Failed to parse Python output:", parseErr);
+      res.status(500).json({ error: "Invalid response from Python" });
+    }
+  });
 });
+
 
 /////SETUP ROUTES
 const unzipper = require("unzipper"); // npm install unzipper
