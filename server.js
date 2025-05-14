@@ -483,34 +483,33 @@ app.get("/ftp-list", (req, res) => {
   const client = new FTPClient();
 
   client.on("ready", () => {
-    // ✅ OpenVMS format
     client.cwd("CTA2$DISK:[PRIPRD.LGI.PBA470FT]", (err) => {
       if (err) {
-        console.error("❌ Directory change error:", err.message);
+        console.error("❌ Failed to change directory:", err.message);
         client.end();
         return res.status(500).json({ error: "Failed to change directory" });
       }
 
       client.list((err, list) => {
         if (err) {
-          console.error("❌ Listing error:", err.message);
+          console.error("❌ Failed to list files:", err.message);
           client.end();
           return res.status(500).json({ error: "Failed to list files" });
         }
 
         const files = list
           .filter(item => item.name.toUpperCase().endsWith(".ZIP;1"))
-          .map(item => item.name.split(";")[0]); // remove ;1
+          .map(item => item.name.split(";")[0]); // Strip ";1"
 
         client.end();
-        return res.json(files);
+        res.json(files); // ✅ Always return valid JSON
       });
     });
   });
 
   client.on("error", (err) => {
-    console.error("❌ FTP connection error:", err.message);
-    res.status(500).json({ error: "FTP connection failed" });
+    console.error("❌ FTP error:", err.message);
+    res.status(500).json({ error: "FTP connection failed" }); // ✅ JSON error
   });
 
   client.connect({
@@ -519,6 +518,7 @@ app.get("/ftp-list", (req, res) => {
     password: "p72vr9xz3"
   });
 });
+
 
 
 
