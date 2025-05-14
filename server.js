@@ -487,11 +487,13 @@ client.ftp.socketTimeout = 10000;
 
   try {
     await client.access({
-      host: process.env.FTP_HOST,
-      user: process.env.FTP_USER,
-      password: process.env.FTP_PASS,
-      secure: false
-    });
+          host: process.env.FTP_HOST,
+          user: process.env.FTP_USER,
+          password: process.env.FTP_PASS,
+          secure: false,
+          passive: true
+        });
+
 
 
     const list = await client.list();
