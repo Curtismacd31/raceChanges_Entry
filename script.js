@@ -745,6 +745,8 @@
 			<option value="Equipment Change">Equipment Change</option>
 			<option value="Claimed">Claimed</option>
 			<option value="Other">Other</option>
+   			<option value="Notes">Notes</option>
+      			<option value="Wagering">Wagering</option>
 		`;
 
 		if (entry.category) {
