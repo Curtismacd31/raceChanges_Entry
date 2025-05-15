@@ -121,7 +121,7 @@ app.post('/api/:filename', (req, res) => {
                 c.raceNumber,
                 c.saddlePad || '',
                 c.horseName || '',
-                c.category,
+                c.category || '',
                 c.change,
                 trackCondition || '',
                 weather || '',
