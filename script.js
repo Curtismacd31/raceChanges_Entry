@@ -741,7 +741,7 @@
 			<option value="Owner Change">Owner Change</option>
 			<option value="Medication Change">Medication Change</option>
 			<option value="SCRATCHED">SCRATCHED</option>
-   			<option value="Line TBA">Line TBA</option>
+   			<option value="LTBA">LTBA</option>
 			<option value="Equipment Change">Equipment Change</option>
 			<option value="Claimed">Claimed</option>
 			<option value="Other">Other</option>
